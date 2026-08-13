@@ -5,7 +5,9 @@
 - [x] Publish the validated ticket branch and obtain trusted exact-head review
   through its pull request. `ifuri-validator-agent` approved and merged
   `aa84c9a0323f04c63662d6c4b05595f0a72f9d02`.
-- [ ] Add payment-provider and deployment mapping profiles after neutral review.
+- [x] [ticket-003](project/ticket-003/README.md) — add provider-neutral payment
+  and deployment mapping profiles with validated PayPal and
+  Plesk/Wellmanifest examples.
 - [x] [ticket-002](project/ticket-002/README.md) — standardize generic usage
   packages, capability-equivalent tiers, expiring PrePaid add-ons, localized
   display currencies and separate self-hosted perpetual licensing.

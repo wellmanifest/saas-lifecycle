@@ -1,0 +1,454 @@
+{
+  "schema": "wellmanifest.saas-adapter-profile-examples/v1",
+  "profiles": [
+    {
+      "$schema": "https://wellmanifest.dev/schemas/saas-adapter-profile/v1",
+      "schema": "wellmanifest.saas-payment-adapter-profile/v1",
+      "profileRef": "profile://sub.actor/payment/paypal/v1",
+      "version": "1.0.0",
+      "adapterRef": "adapter://sub.actor/payment/paypal-rest/v1",
+      "providerRef": "provider://paypal.com/rest/v1",
+      "upstreamContracts": [
+        "https://developer.paypal.com/docs/api/orders/v2/",
+        "https://developer.paypal.com/docs/api/subscriptions/v1/",
+        "https://developer.paypal.com/docs/api/webhooks/v1/"
+      ],
+      "operations": [
+        {
+          "id": "create_subscription",
+          "effect": "command",
+          "contractRef": "https://developer.paypal.com/docs/api/subscriptions/v1/#subscriptions_create",
+          "requestMappings": [
+            {"source": "providerPlanRef", "targetPointer": "/plan_id", "transform": "registry-lookup"},
+            {"source": "tenantRef", "targetPointer": "/custom_id", "transform": "opaque-reference"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "request-id"}
+        },
+        {
+          "id": "inspect_subscription",
+          "effect": "query",
+          "contractRef": "https://developer.paypal.com/docs/api/subscriptions/v1/#subscriptions_get",
+          "requestMappings": [
+            {"source": "providerResourceId", "targetPointer": "/id", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/plan_id", "target": "providerPlanRef", "transform": "identity"},
+            {"sourceKind": "provider-response", "sourcePointer": "/custom_id", "target": "tenantRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"},
+            {"sourceKind": "provider-plan-registry", "sourcePointer": "/planRef", "target": "planRef", "transform": "registry-lookup"},
+            {"sourceKind": "provider-plan-registry", "sourcePointer": "/priceRef", "target": "priceRef", "transform": "registry-lookup"},
+            {"sourceKind": "provider-plan-registry", "sourcePointer": "/amountMinor", "target": "amountMinor", "transform": "identity"},
+            {"sourceKind": "provider-plan-registry", "sourcePointer": "/currency", "target": "currency", "transform": "uppercase"},
+            {"sourceKind": "request-ledger", "sourcePointer": "/accountRef", "target": "accountRef", "transform": "identity"}
+          ],
+          "idempotency": {"required": false, "keySource": "none"}
+        },
+        {
+          "id": "cancel_subscription",
+          "effect": "command",
+          "contractRef": "https://developer.paypal.com/docs/api/subscriptions/v1/#subscriptions_cancel",
+          "requestMappings": [
+            {"source": "providerResourceId", "targetPointer": "/id", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "request-ledger", "sourcePointer": "/billingRef", "target": "billingRef", "transform": "identity"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "request-id"}
+        },
+        {
+          "id": "create_payment",
+          "effect": "command",
+          "contractRef": "https://developer.paypal.com/docs/api/orders/v2/#orders_create",
+          "requestMappings": [
+            {"source": "requestId", "targetPointer": "/purchase_units/0/reference_id", "transform": "identity"},
+            {"source": "tenantRef", "targetPointer": "/purchase_units/0/custom_id", "transform": "opaque-reference"},
+            {"source": "amountMinor", "targetPointer": "/purchase_units/0/amount/value", "transform": "minor-to-decimal-string"},
+            {"source": "currency", "targetPointer": "/purchase_units/0/amount/currency_code", "transform": "uppercase"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "request-id"}
+        },
+        {
+          "id": "inspect_payment",
+          "effect": "query",
+          "contractRef": "https://developer.paypal.com/docs/api/orders/v2/#orders_get",
+          "requestMappings": [
+            {"source": "providerResourceId", "targetPointer": "/id", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/purchase_units/0/reference_id", "target": "requestId", "transform": "identity"},
+            {"sourceKind": "provider-response", "sourcePointer": "/purchase_units/0/custom_id", "target": "tenantRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/purchase_units/0/amount/value", "target": "amountMinor", "transform": "decimal-string-to-minor"},
+            {"sourceKind": "provider-response", "sourcePointer": "/purchase_units/0/amount/currency_code", "target": "currency", "transform": "uppercase"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"},
+            {"sourceKind": "request-ledger", "sourcePointer": "/accountRef", "target": "accountRef", "transform": "identity"},
+            {"sourceKind": "request-ledger", "sourcePointer": "/planRef", "target": "planRef", "transform": "identity"},
+            {"sourceKind": "request-ledger", "sourcePointer": "/priceRef", "target": "priceRef", "transform": "identity"}
+          ],
+          "idempotency": {"required": false, "keySource": "none"}
+        },
+        {
+          "id": "capture_payment",
+          "effect": "command",
+          "contractRef": "https://developer.paypal.com/docs/api/orders/v2/#orders_capture",
+          "requestMappings": [
+            {"source": "providerResourceId", "targetPointer": "/id", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "request-id"}
+        },
+        {
+          "id": "verify_event",
+          "effect": "verification",
+          "contractRef": "https://developer.paypal.com/docs/api/webhooks/v1/#verify-webhook-signature",
+          "requestMappings": [],
+          "evidenceMappings": [
+            {"sourceKind": "verified-event", "sourcePointer": "/id", "target": "eventRef", "transform": "opaque-reference"},
+            {"sourceKind": "verified-event", "sourcePointer": "/event_type", "target": "eventType", "transform": "identity"},
+            {"sourceKind": "verified-event", "sourcePointer": "/create_time", "target": "occurredAt", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "event-id"}
+        }
+      ],
+      "requiredBindings": ["accountRef", "tenantRef", "planRef", "priceRef", "amountMinor", "currency", "providerStatus"],
+      "eventBindings": [
+        {"providerEvent": "BILLING.SUBSCRIPTION.ACTIVATED", "lifecycleSignal": "reconcile_subscription", "eventIdPointer": "/id", "resourcePointer": "/resource/id", "requiresInspection": true},
+        {"providerEvent": "BILLING.SUBSCRIPTION.SUSPENDED", "lifecycleSignal": "reconcile_subscription", "eventIdPointer": "/id", "resourcePointer": "/resource/id", "requiresInspection": true},
+        {"providerEvent": "BILLING.SUBSCRIPTION.CANCELLED", "lifecycleSignal": "reconcile_subscription", "eventIdPointer": "/id", "resourcePointer": "/resource/id", "requiresInspection": true},
+        {"providerEvent": "PAYMENT.CAPTURE.COMPLETED", "lifecycleSignal": "reconcile_payment", "eventIdPointer": "/id", "resourcePointer": "/resource/supplementary_data/related_ids/order_id", "requiresInspection": true},
+        {"providerEvent": "PAYMENT.CAPTURE.DECLINED", "lifecycleSignal": "reconcile_payment", "eventIdPointer": "/id", "resourcePointer": "/resource/supplementary_data/related_ids/order_id", "requiresInspection": true}
+      ],
+      "verification": {
+        "mode": "provider-api",
+        "contractRef": "https://developer.paypal.com/docs/api/webhooks/v1/#verify-webhook-signature",
+        "operationId": "verify_event",
+        "requiredInputs": ["raw-body", "transport-signature", "configured-verifier-binding", "provider-certificate-metadata"],
+        "successPredicate": {"source": "operation-result", "pointer": "/verification_status", "equals": "SUCCESS"},
+        "failureOutcome": "denied",
+        "payloadRetention": "digest-only"
+      },
+      "reconciliation": {
+        "subscriptionInspectOperationId": "inspect_subscription",
+        "paymentInspectOperationId": "inspect_payment",
+        "unknownEventOutcome": "quarantine",
+        "outOfOrder": "inspect-authoritative-resource",
+        "staleEvent": "no-transition"
+      },
+      "retryPolicy": {
+        "maxAttempts": 5,
+        "backoff": "bounded-exponential",
+        "retryableOutcomes": ["timeout", "rate-limited", "provider-unavailable", "pending"],
+        "terminalOutcomes": ["verified", "denied", "failed", "cancelled", "exhausted"]
+      },
+      "evidencePolicy": {
+        "providerPayload": "separate-evidence-store",
+        "lifecycleReceipt": "references-and-digests-only",
+        "authorizationMaterial": "external-binding-only",
+        "personalData": "minimized"
+      }
+    },
+    {
+      "$schema": "https://wellmanifest.dev/schemas/saas-adapter-profile/v1",
+      "schema": "wellmanifest.saas-payment-adapter-profile/v1",
+      "profileRef": "profile://example.test/payment/stripe/v1",
+      "version": "1.0.0",
+      "adapterRef": "adapter://example.test/payment/stripe-rest/v1",
+      "providerRef": "provider://stripe.com/rest/v1",
+      "upstreamContracts": [
+        "https://docs.stripe.com/api/payment_intents",
+        "https://docs.stripe.com/api/subscriptions",
+        "https://docs.stripe.com/webhooks"
+      ],
+      "operations": [
+        {
+          "id": "create_subscription",
+          "effect": "command",
+          "contractRef": "https://docs.stripe.com/api/subscriptions/create",
+          "requestMappings": [
+            {"source": "providerPlanRef", "targetPointer": "/items/0/price", "transform": "registry-lookup"},
+            {"source": "tenantRef", "targetPointer": "/metadata/tenant_ref", "transform": "opaque-reference"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "request-id"}
+        },
+        {
+          "id": "inspect_subscription",
+          "effect": "query",
+          "contractRef": "https://docs.stripe.com/api/subscriptions/retrieve",
+          "requestMappings": [
+            {"source": "providerResourceId", "targetPointer": "/id", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/items/data/0/price/id", "target": "providerPlanRef", "transform": "identity"},
+            {"sourceKind": "provider-response", "sourcePointer": "/metadata/tenant_ref", "target": "tenantRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"},
+            {"sourceKind": "provider-plan-registry", "sourcePointer": "/planRef", "target": "planRef", "transform": "registry-lookup"},
+            {"sourceKind": "provider-plan-registry", "sourcePointer": "/priceRef", "target": "priceRef", "transform": "registry-lookup"},
+            {"sourceKind": "provider-response", "sourcePointer": "/items/data/0/price/unit_amount", "target": "amountMinor", "transform": "identity"},
+            {"sourceKind": "provider-response", "sourcePointer": "/currency", "target": "currency", "transform": "uppercase"},
+            {"sourceKind": "request-ledger", "sourcePointer": "/accountRef", "target": "accountRef", "transform": "identity"}
+          ],
+          "idempotency": {"required": false, "keySource": "none"}
+        },
+        {
+          "id": "cancel_subscription",
+          "effect": "command",
+          "contractRef": "https://docs.stripe.com/api/subscriptions/cancel",
+          "requestMappings": [
+            {"source": "providerResourceId", "targetPointer": "/id", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "request-id"}
+        },
+        {
+          "id": "create_payment",
+          "effect": "command",
+          "contractRef": "https://docs.stripe.com/api/payment_intents/create",
+          "requestMappings": [
+            {"source": "amountMinor", "targetPointer": "/amount", "transform": "identity"},
+            {"source": "currency", "targetPointer": "/currency", "transform": "lowercase"},
+            {"source": "tenantRef", "targetPointer": "/metadata/tenant_ref", "transform": "opaque-reference"},
+            {"source": "priceRef", "targetPointer": "/metadata/price_ref", "transform": "opaque-reference"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "request-id"}
+        },
+        {
+          "id": "inspect_payment",
+          "effect": "query",
+          "contractRef": "https://docs.stripe.com/api/payment_intents/retrieve",
+          "requestMappings": [
+            {"source": "providerResourceId", "targetPointer": "/id", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/metadata/tenant_ref", "target": "tenantRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/metadata/price_ref", "target": "priceRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/amount", "target": "amountMinor", "transform": "identity"},
+            {"sourceKind": "provider-response", "sourcePointer": "/currency", "target": "currency", "transform": "uppercase"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"},
+            {"sourceKind": "request-ledger", "sourcePointer": "/accountRef", "target": "accountRef", "transform": "identity"},
+            {"sourceKind": "request-ledger", "sourcePointer": "/planRef", "target": "planRef", "transform": "identity"}
+          ],
+          "idempotency": {"required": false, "keySource": "none"}
+        },
+        {
+          "id": "capture_payment",
+          "effect": "command",
+          "contractRef": "https://docs.stripe.com/api/payment_intents/capture",
+          "requestMappings": [
+            {"source": "providerResourceId", "targetPointer": "/id", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/id", "target": "billingRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "request-id"}
+        },
+        {
+          "id": "verify_event",
+          "effect": "verification",
+          "contractRef": "https://docs.stripe.com/webhooks/signature",
+          "requestMappings": [],
+          "evidenceMappings": [
+            {"sourceKind": "verified-event", "sourcePointer": "/id", "target": "eventRef", "transform": "opaque-reference"},
+            {"sourceKind": "verified-event", "sourcePointer": "/type", "target": "eventType", "transform": "identity"},
+            {"sourceKind": "verified-event", "sourcePointer": "/created", "target": "occurredAt", "transform": "unix-seconds-to-date-time"}
+          ],
+          "idempotency": {"required": true, "keySource": "event-id"}
+        }
+      ],
+      "requiredBindings": ["accountRef", "tenantRef", "planRef", "priceRef", "amountMinor", "currency", "providerStatus"],
+      "eventBindings": [
+        {"providerEvent": "customer.subscription.created", "lifecycleSignal": "reconcile_subscription", "eventIdPointer": "/id", "resourcePointer": "/data/object/id", "requiresInspection": true},
+        {"providerEvent": "customer.subscription.updated", "lifecycleSignal": "reconcile_subscription", "eventIdPointer": "/id", "resourcePointer": "/data/object/id", "requiresInspection": true},
+        {"providerEvent": "customer.subscription.deleted", "lifecycleSignal": "reconcile_subscription", "eventIdPointer": "/id", "resourcePointer": "/data/object/id", "requiresInspection": true},
+        {"providerEvent": "payment_intent.succeeded", "lifecycleSignal": "reconcile_payment", "eventIdPointer": "/id", "resourcePointer": "/data/object/id", "requiresInspection": true},
+        {"providerEvent": "payment_intent.payment_failed", "lifecycleSignal": "reconcile_payment", "eventIdPointer": "/id", "resourcePointer": "/data/object/id", "requiresInspection": true}
+      ],
+      "verification": {
+        "mode": "local-signature",
+        "contractRef": "https://docs.stripe.com/webhooks/signature",
+        "operationId": "verify_event",
+        "requiredInputs": ["raw-body", "transport-signature", "configured-verifier-binding"],
+        "successPredicate": {"source": "verified-call-return", "equals": "verified"},
+        "failureOutcome": "denied",
+        "payloadRetention": "digest-only"
+      },
+      "reconciliation": {
+        "subscriptionInspectOperationId": "inspect_subscription",
+        "paymentInspectOperationId": "inspect_payment",
+        "unknownEventOutcome": "quarantine",
+        "outOfOrder": "inspect-authoritative-resource",
+        "staleEvent": "no-transition"
+      },
+      "retryPolicy": {
+        "maxAttempts": 5,
+        "backoff": "bounded-exponential",
+        "retryableOutcomes": ["timeout", "rate-limited", "provider-unavailable", "pending"],
+        "terminalOutcomes": ["verified", "denied", "failed", "cancelled", "exhausted"]
+      },
+      "evidencePolicy": {
+        "providerPayload": "separate-evidence-store",
+        "lifecycleReceipt": "references-and-digests-only",
+        "authorizationMaterial": "external-binding-only",
+        "personalData": "minimized"
+      }
+    },
+    {
+      "$schema": "https://wellmanifest.dev/schemas/saas-adapter-profile/v1",
+      "schema": "wellmanifest.saas-deployment-adapter-profile/v1",
+      "profileRef": "profile://sub.actor/deployment/plesk-wellmanifest/v1",
+      "version": "1.0.0",
+      "adapterRef": "adapter://sub.actor/deployment/plesk-wellmanifest/v1",
+      "upstreamContracts": [
+        "contract://wellmanifest.dev/poa/deployment/v1",
+        "contract://wellmanifest.dev/deployment/grants/v1",
+        "https://docs.plesk.com/en-US/obsidian/api-rpc/about-xml-api.28709/",
+        "plesk://host/site/command/publish",
+        "plesk://host/site/command/publish-verify",
+        "plesk://host/site/command/release-rollback"
+      ],
+      "operations": [
+        {
+          "id": "compile",
+          "effect": "query",
+          "contractRef": "contract://wellmanifest.dev/poa/deployment/v1#compile",
+          "requestMappings": [
+            {"source": "accountRef", "targetPointer": "/accountRef", "transform": "identity"},
+            {"source": "tenantRef", "targetPointer": "/tenantRef", "transform": "identity"},
+            {"source": "planRef", "targetPointer": "/planRef", "transform": "identity"},
+            {"source": "deploymentRef", "targetPointer": "/deploymentRef", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/planHash", "target": "planHash", "transform": "identity"},
+            {"sourceKind": "provider-response", "sourcePointer": "/deploymentRef", "target": "deploymentRef", "transform": "identity"}
+          ],
+          "idempotency": {"required": false, "keySource": "none"}
+        },
+        {
+          "id": "authorize",
+          "effect": "command",
+          "contractRef": "contract://wellmanifest.dev/deployment/grants/v1#issue-single-use",
+          "requestMappings": [
+            {"source": "deploymentRef", "targetPointer": "/deploymentRef", "transform": "identity"},
+            {"source": "planHash", "targetPointer": "/planHash", "transform": "identity"},
+            {"source": "idempotencyKey", "targetPointer": "/idempotencyKey", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/grantRef", "target": "grantRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/evidenceRef", "target": "evidenceRef", "transform": "opaque-reference"}
+          ],
+          "idempotency": {"required": true, "keySource": "outbox-id"}
+        },
+        {
+          "id": "apply",
+          "effect": "command",
+          "contractRef": "plesk://host/site/command/publish",
+          "requestMappings": [
+            {"source": "deploymentRef", "targetPointer": "/deploymentRef", "transform": "identity"},
+            {"source": "planHash", "targetPointer": "/planHash", "transform": "identity"},
+            {"source": "grantRef", "targetPointer": "/grantRef", "transform": "identity"},
+            {"source": "idempotencyKey", "targetPointer": "/idempotencyKey", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "provider-response", "sourcePointer": "/deploymentRef", "target": "deploymentRef", "transform": "identity"},
+            {"sourceKind": "provider-response", "sourcePointer": "/evidenceRef", "target": "evidenceRef", "transform": "opaque-reference"},
+            {"sourceKind": "provider-response", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "outbox-id"}
+        },
+        {
+          "id": "verify",
+          "effect": "verification",
+          "contractRef": "plesk://host/site/command/publish-verify",
+          "requestMappings": [
+            {"source": "deploymentRef", "targetPointer": "/deploymentRef", "transform": "identity"},
+            {"source": "planHash", "targetPointer": "/planHash", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "deployment-verifier", "sourcePointer": "/resourceRef", "target": "resourceRef", "transform": "opaque-reference"},
+            {"sourceKind": "deployment-verifier", "sourcePointer": "/evidenceRef", "target": "evidenceRef", "transform": "opaque-reference"},
+            {"sourceKind": "deployment-verifier", "sourcePointer": "/planHash", "target": "planHash", "transform": "identity"},
+            {"sourceKind": "deployment-verifier", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "outbox-id"}
+        },
+        {
+          "id": "rollback",
+          "effect": "command",
+          "contractRef": "plesk://host/site/command/release-rollback",
+          "requestMappings": [
+            {"source": "deploymentRef", "targetPointer": "/deploymentRef", "transform": "identity"},
+            {"source": "grantRef", "targetPointer": "/grantRef", "transform": "identity"},
+            {"source": "idempotencyKey", "targetPointer": "/idempotencyKey", "transform": "identity"}
+          ],
+          "evidenceMappings": [
+            {"sourceKind": "deployment-verifier", "sourcePointer": "/resourceRef", "target": "resourceRef", "transform": "opaque-reference"},
+            {"sourceKind": "deployment-verifier", "sourcePointer": "/evidenceRef", "target": "evidenceRef", "transform": "opaque-reference"},
+            {"sourceKind": "deployment-verifier", "sourcePointer": "/status", "target": "providerStatus", "transform": "identity"}
+          ],
+          "idempotency": {"required": true, "keySource": "outbox-id"}
+        }
+      ],
+      "requiredBindings": ["accountRef", "tenantRef", "planRef", "deploymentRef", "planHash", "grantRef", "idempotencyKey"],
+      "authorization": {
+        "mode": "single-use-external-grant",
+        "operationId": "authorize",
+        "persistGrant": false,
+        "denialOutcome": "denied"
+      },
+      "activationBoundary": {
+        "requiresApplyAndVerify": true,
+        "verifyOperationId": "verify",
+        "successOutcome": "activated",
+        "mismatchOutcome": "failed"
+      },
+      "outbox": {
+        "durable": true,
+        "reuseIdempotencyKey": true,
+        "claimMode": "single-worker-lease"
+      },
+      "coordinatePolicy": {
+        "profileContainsCoordinates": false,
+        "resolution": "external-deployment-binding",
+        "receipt": "resource-reference-only"
+      },
+      "retryPolicy": {
+        "maxAttempts": 5,
+        "backoff": "bounded-exponential",
+        "retryableOutcomes": ["timeout", "rate-limited", "provider-unavailable", "pending"],
+        "terminalOutcomes": ["verified", "denied", "failed", "cancelled", "exhausted"]
+      },
+      "evidencePolicy": {
+        "providerPayload": "separate-evidence-store",
+        "lifecycleReceipt": "references-and-digests-only",
+        "authorizationMaterial": "external-binding-only",
+        "personalData": "minimized"
+      }
+    }
+  ]
+}

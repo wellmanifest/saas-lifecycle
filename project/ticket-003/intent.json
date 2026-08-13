@@ -1,0 +1,110 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-003",
+  "summary": "Define payment and deployment mapping profiles",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-003/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "standard/saas-adapter-profile.schema.json",
+    "standard/adapter-profiles.examples.json",
+    "standard/conformance.py",
+    "docs/ADAPTER_PROFILES.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": ["ticket-002"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e238ff77c40a42f3dabd78d3cddd1a238e7b24b5",
+    "targetBranch": "main",
+    "outcome": "The SaaS lifecycle has provider-neutral, machine-validatable payment and deployment mapping profiles with concrete PayPal and Plesk/Wellmanifest examples, exact verification and idempotency boundaries, and no embedded secrets or provider-owned lifecycle state.",
+    "nonGoals": [
+      "Call a payment or deployment provider",
+      "Store provider credentials, payloads, hostnames, users, docroots or grants",
+      "Define tax, refunds, metering or provider-specific business policy",
+      "Replace the upstream provider, POA or deployment contract",
+      "Publish or merge without separately authorized trusted delivery"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add a separate closed adapter-profile document family rather than provider fields in the core lifecycle schema. Payment mappings declare server-side operations, verified event intake, exact neutral binding checks and reconciliation. Deployment mappings declare compile, authorization, apply and verification stages over durable outbox inputs. Both use versioned upstream references, JSON Pointer evidence selectors, finite retry policy and redacted outputs; selectors for credentials, raw payloads or deployment coordinates fail conformance.",
+      "components": [
+        {
+          "name": "adapter-profile-contract",
+          "paths": [
+            "standard/saas-adapter-profile.schema.json",
+            "standard/adapter-profiles.examples.json"
+          ]
+        },
+        {
+          "name": "conformance-and-guidance",
+          "paths": [
+            "standard/conformance.py",
+            "docs/ADAPTER_PROFILES.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "Add the experimental wellmanifest.saas-adapter-profile/v1 document family"
+      ],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert ticket-003; the integrated core lifecycle contract and ticket-002 commercial models remain unchanged."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-003/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-003/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-003/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-003/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-003/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "python3 -m py_compile standard/conformance.py",
+          "docker compose run --rm --build conformance",
+          "./project/governance-check.sh --actor agent",
+          "git diff --check"
+        ],
+        "evidence": "project/ticket-003/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
