@@ -21,3 +21,8 @@
   currency selection, mixed settlement currencies and maintenance renewal.
 - Bound every adversarial conformance closure to its own document, then expanded
   the suite from 15 nominal cases to 32 independently verified rejections.
+
+### Closed
+
+- The repository-scoped Validator App approved exact HEAD `73cd6ec` and merged
+  pull request #2 as `88eb060`; GitHub then deleted the merged remote branch.

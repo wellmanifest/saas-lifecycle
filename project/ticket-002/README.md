@@ -2,8 +2,8 @@
 
 - **ID**: ticket-002
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-13
 
 ## Goal and scope
@@ -63,3 +63,12 @@ second confirmation. The follow-up “a powinny być” explicitly authorizes re
 branch publication, pull-request creation and pursuit of protected integration
 into `main`. It does not bypass exact-head trusted review: merge authority must
 still come from the repository's protected reviewer/validator boundary.
+
+## Publication result
+
+Pull request #2 was approved for exact HEAD
+`73cd6ec175117b0749a05dbf6421d7e39c88af95` by the repository-scoped
+`ifuri-validator-agent` App and merged into `main` as
+`88eb060e5a765913958612e128dbd444b37665d6`. GitHub deleted the merged remote
+ticket branch automatically. This governance-only closure is recorded from the
+integrated default branch.
