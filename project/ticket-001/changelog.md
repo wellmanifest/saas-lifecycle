@@ -16,3 +16,5 @@
 
 - Named `product-lifecycle`, `legal-lifecycle` and `agent` as external
   authorities in `docs/ARCHITECTURE.md` without absorbing their contracts.
+- Closed after `ifuri-validator-agent` approved and merged pull request #1 at
+  `aa84c9a0323f04c63662d6c4b05595f0a72f9d02`.
