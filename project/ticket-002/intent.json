@@ -44,7 +44,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Keep one closed provider-neutral document family. Plans declare a commercial kind, deployment mode and optional generic usage allowance. Capability parity is asserted by an offer-scoped group and validated by exact entitlement equality. A prepaid add-on has one-time settlement, never-reset allowance, explicit validity and compatible base plans; buying it issues a server-verified usage grant without replacing currentPlanRef. Display quotes become explicit base/quote pairs, and locale defaults require direct quote coverage unless the requested display currency already equals settlement. Perpetual self-hosted items use one-time settlement and may expose optional recurring maintenance while remaining outside Cloud usage renewal.",
+      "decision": "Keep one closed provider-neutral document family. Plans declare a commercial kind, deployment mode, one or more versioned priceRef options and optional generic usage allowance. Capability parity is asserted by an offer-scoped group and validated by exact entitlement equality. A prepaid add-on has one-time settlement, never-reset allowance, explicit validity and compatible base plans; buying it issues a server-verified usage grant without replacing currentPlanRef. Display quotes become explicit base/quote pairs, and locale defaults require direct quote coverage unless the requested display currency already equals settlement. Perpetual self-hosted items use one-time settlement and may expose optional recurring maintenance while remaining outside Cloud usage renewal.",
       "components": [
         {
           "name": "normative-contract",
@@ -101,7 +101,7 @@
         "criterion": "AC-06",
         "commands": [
           "python3 -m py_compile standard/conformance.py",
-          "docker compose run --rm conformance",
+          "docker compose run --rm --build conformance",
           "./project/governance-check.sh --actor agent",
           "git diff --check"
         ],

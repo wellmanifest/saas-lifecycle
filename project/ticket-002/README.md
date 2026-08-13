@@ -3,7 +3,7 @@
 - **ID**: ticket-002
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-13
 
 ## Goal and scope
@@ -30,22 +30,23 @@ rates, process a payment, calculate tax, or deploy customer infrastructure.
 
 ## Acceptance criteria
 
-- [ ] AC-01: Every plan declares a commercial type and deployment mode; the
-      schema represents recurring usage allowances, time-limited one-time
-      add-ons and perpetual self-hosted licences with optional maintenance.
-- [ ] AC-02: A capability-parity group guarantees equal entitlements while
+- [x] AC-01: Every plan declares a commercial type and deployment mode; the
+      schema represents monthly/yearly price options, recurring usage
+      allowances, time-limited one-time add-ons and perpetual self-hosted
+      licences with optional maintenance.
+- [x] AC-02: A capability-parity group guarantees equal entitlements while
       allowing plans to differ by price and included usage, so seat count is
       never an implicit pricing dimension.
-- [ ] AC-03: PrePaid purchase is a first-class lifecycle operation that adds a
+- [x] AC-03: PrePaid purchase is a first-class lifecycle operation that adds a
       verified, expiring usage grant without replacing the current base plan,
       and receipts can report add-on activation.
-- [ ] AC-04: Every indicative conversion identifies base and quote currency,
+- [x] AC-04: Every indicative conversion identifies base and quote currency,
       rate and date; locale defaults are unique, have conversion coverage and
       never override the authoritative settlement currency.
-- [ ] AC-05: Architecture and logic-flow guidance define selection, top-up,
+- [x] AC-05: Architecture and logic-flow guidance define selection, top-up,
       exhaustion, expiry, self-hosted maintenance and explicit currency-choice
       boundaries without assigning authority to the browser.
-- [ ] AC-06: Schema integrity, positive and adversarial conformance, networkless
+- [x] AC-06: Schema integrity, positive and adversarial conformance, networkless
       Docker validation, diff hygiene and managed governance all pass.
 
 ## Participants

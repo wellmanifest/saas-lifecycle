@@ -34,9 +34,40 @@ retaining its provider, deployment, legal and metering authority boundaries.
 - Reviewed the merged v1 schema, request grammar, conformance runner,
   architecture and logic-flow guidance against the action-priced Basic/Pro,
   PrePaid, localized-currency and separate On-Premise implementation.
+- Added closed commercial models for flat and usage subscriptions, PrePaid
+  add-ons and perpetual licences, plus Cloud/self-hosted/hybrid delivery modes.
+  A generic versioned `metricRef` keeps actions, API calls, documents, devices
+  and seats outside the lifecycle standard's metering authority.
+- Replaced one implicit plan settlement with one or more unique versioned
+  `priceRef` options. One stable plan can now expose monthly and annual prices;
+  lifecycle requests, subscriptions, usage grants and receipts bind the exact
+  selected option.
+- Added `capabilityParityGroup` validation: peers must have equal entitlements,
+  deployment mode and commercial kind but may differ by price and allowance.
+- Made `purchase_addon` first-class. A compatible, one-time, never-reset
+  allowance with explicit validity creates a server-verified usage grant and
+  `addon_activated` receipt without replacing `currentPlanRef`.
+- Bound indicative exchange rates to explicit base/quote currency pairs and
+  added unique locale defaults with direct conversion coverage from every
+  Cloud, licence and maintenance settlement currency.
+- Added perpetual self-hosted/hybrid licensing with optional recurring
+  maintenance, included periods and explicit renewal policy.
+- Expanded the action grammar, architecture diagrams, state flow, top-up,
+  currency-choice and maintenance guidance while retaining payment, metering,
+  deployment and legal systems as external authorities.
+- Fixed the conformance runner's pre-existing late-bound lambda defect, which
+  previously let all adversarial closures reference the last test document.
+  Thirty-two independently bound adversarial cases now prove the intended
+  rejection paths.
+- Passed Draft 2020-12 metaschema and positive-document validation, host and
+  rebuilt networkless Docker conformance, Python compilation, diff hygiene and
+  managed governance with identical schema and grammar digests.
 
 ## Blockers
 
 - None inside the recorded intent; proceed without a second confirmation.
+- The branch is locally complete and stays `IN_PROGRESS / PUBLICATION` until a
+  future exact-head trusted review and merge; this request did not authorize
+  remote publication.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.
