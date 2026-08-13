@@ -1,0 +1,482 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wellmanifest.dev/schemas/saas-adapter-profile/v1",
+  "title": "Wellmanifest SaaS adapter profile v1",
+  "oneOf": [
+    {"$ref": "#/$defs/paymentProfile"},
+    {"$ref": "#/$defs/deploymentProfile"}
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$",
+      "maxLength": 96
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "uri": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9+.-]*://[^\\s]+$",
+      "maxLength": 512
+    },
+    "profileRef": {
+      "type": "string",
+      "pattern": "^profile://[^\\s]+/v[0-9]+$",
+      "maxLength": 256
+    },
+    "adapterRef": {
+      "type": "string",
+      "pattern": "^adapter://[^\\s]+/v[0-9]+$",
+      "maxLength": 256
+    },
+    "providerRef": {
+      "type": "string",
+      "pattern": "^provider://[^\\s]+(?:/v[0-9]+)?$",
+      "maxLength": 256
+    },
+    "jsonPointer": {
+      "type": "string",
+      "pattern": "^(?:/(?:[^~/]|~0|~1)*)+$",
+      "maxLength": 384
+    },
+    "sourceField": {
+      "enum": [
+        "accountRef",
+        "tenantRef",
+        "planRef",
+        "priceRef",
+        "providerPlanRef",
+        "amountMinor",
+        "currency",
+        "billingRef",
+        "providerResourceId",
+        "requestId",
+        "eventRef",
+        "deploymentRef",
+        "planHash",
+        "grantRef",
+        "idempotencyKey"
+      ]
+    },
+    "evidenceField": {
+      "enum": [
+        "accountRef",
+        "tenantRef",
+        "planRef",
+        "priceRef",
+        "providerPlanRef",
+        "amountMinor",
+        "currency",
+        "billingRef",
+        "providerStatus",
+        "requestId",
+        "eventRef",
+        "eventType",
+        "occurredAt",
+        "deploymentRef",
+        "planHash",
+        "grantRef",
+        "resourceRef",
+        "evidenceRef"
+      ]
+    },
+    "transform": {
+      "enum": [
+        "identity",
+        "registry-lookup",
+        "minor-to-decimal-string",
+        "decimal-string-to-minor",
+        "uppercase",
+        "lowercase",
+        "opaque-reference",
+        "unix-seconds-to-date-time",
+        "sha256"
+      ]
+    },
+    "requestMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "targetPointer", "transform"],
+      "properties": {
+        "source": {"$ref": "#/$defs/sourceField"},
+        "targetPointer": {"$ref": "#/$defs/jsonPointer"},
+        "transform": {"$ref": "#/$defs/transform"}
+      }
+    },
+    "evidenceMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceKind", "sourcePointer", "target", "transform"],
+      "properties": {
+        "sourceKind": {
+          "enum": [
+            "provider-response",
+            "verified-event",
+            "provider-plan-registry",
+            "request-ledger",
+            "deployment-verifier"
+          ]
+        },
+        "sourcePointer": {"$ref": "#/$defs/jsonPointer"},
+        "target": {"$ref": "#/$defs/evidenceField"},
+        "transform": {"$ref": "#/$defs/transform"}
+      }
+    },
+    "idempotency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "keySource"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "keySource": {
+          "enum": ["none", "request-id", "event-id", "outbox-id"]
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "effect",
+        "contractRef",
+        "requestMappings",
+        "evidenceMappings",
+        "idempotency"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "effect": {"enum": ["query", "command", "verification"]},
+        "contractRef": {"$ref": "#/$defs/uri"},
+        "requestMappings": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {"$ref": "#/$defs/requestMapping"}
+        },
+        "evidenceMappings": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "items": {"$ref": "#/$defs/evidenceMapping"}
+        },
+        "idempotency": {"$ref": "#/$defs/idempotency"}
+      }
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxAttempts",
+        "backoff",
+        "retryableOutcomes",
+        "terminalOutcomes"
+      ],
+      "properties": {
+        "maxAttempts": {"type": "integer", "minimum": 1, "maximum": 20},
+        "backoff": {"enum": ["none", "bounded-exponential"]},
+        "retryableOutcomes": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 8,
+          "items": {
+            "enum": ["timeout", "rate-limited", "provider-unavailable", "pending"]
+          }
+        },
+        "terminalOutcomes": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 2,
+          "items": {
+            "enum": ["verified", "denied", "failed", "cancelled", "exhausted"]
+          }
+        }
+      }
+    },
+    "evidencePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "providerPayload",
+        "lifecycleReceipt",
+        "authorizationMaterial",
+        "personalData"
+      ],
+      "properties": {
+        "providerPayload": {"const": "separate-evidence-store"},
+        "lifecycleReceipt": {"const": "references-and-digests-only"},
+        "authorizationMaterial": {"const": "external-binding-only"},
+        "personalData": {"const": "minimized"}
+      }
+    },
+    "eventBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "providerEvent",
+        "lifecycleSignal",
+        "eventIdPointer",
+        "resourcePointer",
+        "requiresInspection"
+      ],
+      "properties": {
+        "providerEvent": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{2,127}$"
+        },
+        "lifecycleSignal": {
+          "enum": [
+            "reconcile_subscription",
+            "reconcile_payment",
+            "subscription_activated",
+            "subscription_suspended",
+            "subscription_cancelled",
+            "addon_payment_completed",
+            "payment_denied"
+          ]
+        },
+        "eventIdPointer": {"$ref": "#/$defs/jsonPointer"},
+        "resourcePointer": {"$ref": "#/$defs/jsonPointer"},
+        "requiresInspection": {"type": "boolean"}
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "contractRef",
+        "operationId",
+        "requiredInputs",
+        "successPredicate",
+        "failureOutcome",
+        "payloadRetention"
+      ],
+      "properties": {
+        "mode": {"enum": ["provider-api", "local-signature"]},
+        "contractRef": {"$ref": "#/$defs/uri"},
+        "operationId": {"const": "verify_event"},
+        "requiredInputs": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 3,
+          "items": {
+            "enum": [
+              "raw-body",
+              "transport-signature",
+              "configured-verifier-binding",
+              "provider-certificate-metadata"
+            ]
+          }
+        },
+        "successPredicate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "equals"],
+          "properties": {
+            "source": {"enum": ["operation-result", "verified-call-return"]},
+            "pointer": {"$ref": "#/$defs/jsonPointer"},
+            "equals": {"enum": ["SUCCESS", "verified"]}
+          }
+        },
+        "failureOutcome": {"const": "denied"},
+        "payloadRetention": {"const": "digest-only"}
+      }
+    },
+    "reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subscriptionInspectOperationId",
+        "paymentInspectOperationId",
+        "unknownEventOutcome",
+        "outOfOrder",
+        "staleEvent"
+      ],
+      "properties": {
+        "subscriptionInspectOperationId": {"const": "inspect_subscription"},
+        "paymentInspectOperationId": {"const": "inspect_payment"},
+        "unknownEventOutcome": {"const": "quarantine"},
+        "outOfOrder": {"const": "inspect-authoritative-resource"},
+        "staleEvent": {"const": "no-transition"}
+      }
+    },
+    "paymentProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "$schema",
+        "schema",
+        "profileRef",
+        "version",
+        "adapterRef",
+        "providerRef",
+        "upstreamContracts",
+        "operations",
+        "requiredBindings",
+        "eventBindings",
+        "verification",
+        "reconciliation",
+        "retryPolicy",
+        "evidencePolicy"
+      ],
+      "properties": {
+        "$schema": {"const": "https://wellmanifest.dev/schemas/saas-adapter-profile/v1"},
+        "schema": {"const": "wellmanifest.saas-payment-adapter-profile/v1"},
+        "profileRef": {"$ref": "#/$defs/profileRef"},
+        "version": {"$ref": "#/$defs/version"},
+        "adapterRef": {"$ref": "#/$defs/adapterRef"},
+        "providerRef": {"$ref": "#/$defs/providerRef"},
+        "upstreamContracts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/uri"}
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 12,
+          "items": {"$ref": "#/$defs/operation"}
+        },
+        "requiredBindings": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 7,
+          "items": {
+            "enum": [
+              "accountRef",
+              "tenantRef",
+              "planRef",
+              "priceRef",
+              "amountMinor",
+              "currency",
+              "providerStatus"
+            ]
+          }
+        },
+        "eventBindings": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 20,
+          "items": {"$ref": "#/$defs/eventBinding"}
+        },
+        "verification": {"$ref": "#/$defs/verification"},
+        "reconciliation": {"$ref": "#/$defs/reconciliation"},
+        "retryPolicy": {"$ref": "#/$defs/retryPolicy"},
+        "evidencePolicy": {"$ref": "#/$defs/evidencePolicy"}
+      }
+    },
+    "deploymentAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "operationId", "persistGrant", "denialOutcome"],
+      "properties": {
+        "mode": {"const": "single-use-external-grant"},
+        "operationId": {"const": "authorize"},
+        "persistGrant": {"const": false},
+        "denialOutcome": {"const": "denied"}
+      }
+    },
+    "activationBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiresApplyAndVerify",
+        "verifyOperationId",
+        "successOutcome",
+        "mismatchOutcome"
+      ],
+      "properties": {
+        "requiresApplyAndVerify": {"const": true},
+        "verifyOperationId": {"const": "verify"},
+        "successOutcome": {"const": "activated"},
+        "mismatchOutcome": {"const": "failed"}
+      }
+    },
+    "outbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["durable", "reuseIdempotencyKey", "claimMode"],
+      "properties": {
+        "durable": {"const": true},
+        "reuseIdempotencyKey": {"const": true},
+        "claimMode": {"const": "single-worker-lease"}
+      }
+    },
+    "coordinatePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileContainsCoordinates", "resolution", "receipt"],
+      "properties": {
+        "profileContainsCoordinates": {"const": false},
+        "resolution": {"const": "external-deployment-binding"},
+        "receipt": {"const": "resource-reference-only"}
+      }
+    },
+    "deploymentProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "$schema",
+        "schema",
+        "profileRef",
+        "version",
+        "adapterRef",
+        "upstreamContracts",
+        "operations",
+        "requiredBindings",
+        "authorization",
+        "activationBoundary",
+        "outbox",
+        "coordinatePolicy",
+        "retryPolicy",
+        "evidencePolicy"
+      ],
+      "properties": {
+        "$schema": {"const": "https://wellmanifest.dev/schemas/saas-adapter-profile/v1"},
+        "schema": {"const": "wellmanifest.saas-deployment-adapter-profile/v1"},
+        "profileRef": {"$ref": "#/$defs/profileRef"},
+        "version": {"$ref": "#/$defs/version"},
+        "adapterRef": {"$ref": "#/$defs/adapterRef"},
+        "upstreamContracts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/uri"}
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 8,
+          "items": {"$ref": "#/$defs/operation"}
+        },
+        "requiredBindings": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 7,
+          "items": {
+            "enum": [
+              "accountRef",
+              "tenantRef",
+              "planRef",
+              "deploymentRef",
+              "planHash",
+              "grantRef",
+              "idempotencyKey"
+            ]
+          }
+        },
+        "authorization": {"$ref": "#/$defs/deploymentAuthorization"},
+        "activationBoundary": {"$ref": "#/$defs/activationBoundary"},
+        "outbox": {"$ref": "#/$defs/outbox"},
+        "coordinatePolicy": {"$ref": "#/$defs/coordinatePolicy"},
+        "retryPolicy": {"$ref": "#/$defs/retryPolicy"},
+        "evidencePolicy": {"$ref": "#/$defs/evidencePolicy"}
+      }
+    }
+  }
+}

@@ -27,9 +27,34 @@ the exact account, tenant, plan, price, amount, currency or deployment request.
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Reviewed the integrated lifecycle boundaries, the current Subactor PayPal
+  adapter and controlled Plesk URI catalog, then checked the provider operations
+  against current primary PayPal, Stripe and Plesk documentation.
+- Added a closed Draft 2020-12 profile family with separate payment and
+  deployment variants. Provider vocabulary is confined to profiles while the
+  existing lifecycle schema and grammar remain byte-for-byte unchanged.
+- Required seven payment operations, exact offer/account/tenant evidence,
+  signature verification, authoritative resource inspection, event
+  deduplication, out-of-order reconciliation and finite retry semantics.
+- Required deployment compile, single-use authorization, apply, independent
+  verification and rollback phases over one durable outbox idempotency key.
+  Coordinates and authorization material remain external bindings.
+- Added validated PayPal Orders/Subscriptions/Webhooks, Stripe
+  PaymentIntents/Subscriptions/Webhooks and Subactor Plesk/Wellmanifest
+  deployment examples.
+- Extended dependency-free conformance with profile digests, three positive
+  adapter variants and thirteen new adversarial cases. Host and rebuilt
+  networkless Docker runs reject all 45 total adversarial cases.
+- Added neutral-review guidance with trust-boundary diagrams and explicit
+  instructions for adding another provider without changing the lifecycle
+  state machine.
 
 ## Blockers
 
 - None inside the recorded intent; proceed without a second confirmation.
+- The implementation is locally complete and remains `IN_PROGRESS / VALIDATION`
+  because publication and protected integration were not authorized by the
+  owner's one-word execution confirmation.
 - New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion and trusted merge.
+  external coordination, material objective expansion, publication and trusted
+  merge.

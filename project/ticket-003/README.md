@@ -3,7 +3,7 @@
 - **ID**: ticket-003
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-13
 
 ## Goal and scope
@@ -22,22 +22,22 @@ verification.
 
 ## Acceptance criteria
 
-- [ ] AC-01: A closed Draft 2020-12 schema distinguishes payment and deployment
+- [x] AC-01: A closed Draft 2020-12 schema distinguishes payment and deployment
       mapping profiles and binds each profile, adapter and upstream contract by
       stable versioned references.
-- [ ] AC-02: Payment profiles declare create/inspect/capture/cancel and verified
+- [x] AC-02: Payment profiles declare create/inspect/capture/cancel and verified
       event bindings, exact offer checks, idempotency and reconciliation without
       embedding credentials or trusting a browser callback.
-- [ ] AC-03: Deployment profiles declare compile/authorize/apply/verify
+- [x] AC-03: Deployment profiles declare compile/authorize/apply/verify
       boundaries, durable outbox and idempotency bindings, bounded retries and
       redacted evidence without embedding hosts, users, docroots or grants.
-- [ ] AC-04: Concrete PayPal and Plesk/Wellmanifest examples validate while a
+- [x] AC-04: Concrete PayPal and Plesk/Wellmanifest examples validate while a
       second provider variant demonstrates that the schema does not encode one
       provider's field or event vocabulary as lifecycle authority.
-- [ ] AC-05: Positive and adversarial conformance rejects missing verification,
+- [x] AC-05: Positive and adversarial conformance rejects missing verification,
       unsafe secret/coordinate paths, ambiguous outcomes, unbounded retries and
       duplicate operation or event bindings.
-- [ ] AC-06: Neutrality guidance, host and networkless Docker conformance, diff
+- [x] AC-06: Neutrality guidance, host and networkless Docker conformance, diff
       hygiene and managed governance pass.
 
 ## Participants

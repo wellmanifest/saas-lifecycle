@@ -1,0 +1,52 @@
+Ticket 003 validation log
+Date: 2026-08-13 Europe/Warsaw
+Branch: ticket/003-adapter-profiles
+Accepted base: e238ff77c40a42f3dabd78d3cddd1a238e7b24b5
+
+PASS: primary-source profile review
+- PayPal Orders v2: create, inspect and capture operations plus provider
+  request-id semantics were checked against developer.paypal.com.
+- PayPal Subscriptions v1: create, inspect and cancel operations were checked
+  against developer.paypal.com.
+- PayPal webhook verification and current event names were checked against the
+  official Webhooks API and event-name catalog. The Orders v2 failure event is
+  `PAYMENT.CAPTURE.DECLINED`, not the legacy v1 `DENIED` spelling.
+- Stripe PaymentIntents, Subscriptions and raw-body signed webhook verification
+  were checked against docs.stripe.com. Stripe events only trigger current
+  resource inspection in the profile.
+- Plesk's documented remote API boundary and the local Subactor Plesk binding
+  snapshot were reviewed. The example references controlled publish,
+  publish-verify and rollback capabilities without embedding their coordinates.
+
+PASS: Draft 2020-12 profile contract
+- `Draft202012Validator.check_schema` accepted the closed adapter schema.
+- PayPal, Stripe and Plesk/Wellmanifest examples validate.
+- Existing lifecycle schema and grammar digests remain unchanged.
+- Adapter profile schema digest:
+  `sha256:060495e3dda6a80bc67d861d55422dff65df912028b0d3a7a598959de3df7054`.
+- Adapter examples digest:
+  `sha256:5ed1f16934de26008feafdcdd98577298db2474c8ddf8b5aa0128aadfb52fc49`.
+
+PASS: dependency-free conformance
+- `python3 standard/conformance.py --all` returned `ok: true`.
+- Existing lifecycle document variants: 4.
+- Adapter profile variants: 3.
+- Independently rejected adversarial cases: 45 total, including 13 new profile
+  cases for missing verification, duplicate operations/events, non-idempotent
+  commands, uninspected events, unsafe payment/coordinate pointers, unbounded
+  retries, persistent grants, unverified activation, non-durable outbox and raw
+  provider payloads in lifecycle receipts.
+
+PASS: networkless Docker conformance
+- `docker compose run --rm --build conformance` rebuilt from exact source.
+- The service returned the same profile/lifecycle digests, 3 adapter variants
+  and 45 adversarial rejections under network-none, read-only,
+  capability-dropped and no-new-privileges controls.
+
+PASS: static and governance gates
+- `python3 -m py_compile standard/conformance.py` passed.
+- `git diff --check` passed.
+- `./project/governance-check.sh --actor agent` returned
+  `GOV-PASS: passed (0 errors, 0 warnings)`.
+- Exactly four implementation files changed across the two approved components;
+  no runtime dependency, credential, provider call or deployment was added.
