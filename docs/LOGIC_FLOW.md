@@ -19,12 +19,16 @@ stateDiagram-v2
     PlanChangePending --> Active: new billing and provisioning atomically activated
     Active --> Suspended: provider-verified suspension
     Active --> Cancelled: provider-verified cancellation
+    Active --> Active: verified add-on issues usage grant
     Suspended --> Active: provider-verified reactivation
     Suspended --> Expired: entitlement end reached
 ```
 
 `PaymentPending` and `PaidPendingProvisioning` are intentionally separate. An
 account is not active until both billing and tenant provisioning are verified.
+`purchase_addon` is deliberately not a base-plan transition: after verified
+one-time settlement it adds a usage grant while `currentPlanRef` remains the
+same.
 
 ## Subscription confirmation
 
@@ -36,7 +40,7 @@ sequenceDiagram
     participant E as Event inbox
     participant O as Provisioning outbox
     participant D as Deployment authority
-    U->>P: choose versioned plan or conversion
+    U->>P: choose versioned planRef + exact priceRef or compatible add-on
     P->>B: create/inspect provider subscription with tenant reference
     B-->>P: opaque billing reference
     P->>B: server-side get subscription
@@ -51,6 +55,77 @@ sequenceDiagram
 
 A browser SDK success callback may initiate the `get subscription` step. It
 cannot skip it or construct the verified event.
+
+## Usage package and PrePaid add-on
+
+```mermaid
+sequenceDiagram
+    participant U as Authenticated account
+    participant P as Portal
+    participant O as Versioned offer
+    participant B as Billing adapter
+    participant G as Usage-grant ledger
+    participant M as Metering authority
+    U->>P: purchase_addon with add-on planRef
+    P->>O: verify one-time type, compatibility and metricRef
+    P->>B: create or inspect one-time transaction
+    B-->>P: server-verified payment and billingRef
+    P->>G: issue unique units + validity grant
+    G-->>P: add-on activation receipt
+    M->>G: deduct verified usage under metric contract
+    G-->>P: remaining or exhausted state
+```
+
+The recurring base allowance and each PrePaid purchase are separate grants or
+ledger sources. A top-up has `reset: never`; it expires at its declared boundary
+and cannot renew silently. Deduction order, aggregation and the semantic meaning
+of one unit belong to the referenced metering contract. The SaaS lifecycle owns
+only the commercial source, verified amount, remaining balance and validity.
+
+Two tiers may share `capabilityParityGroup`. In that case they have exactly the
+same entitlements and differ only in commercial values such as price and
+included units. UI labels such as Basic or Pro never replace the stable plan
+reference or introduce an undeclared seat restriction.
+
+## Localized currency presentation
+
+```mermaid
+flowchart TD
+    Locale[Resolved locale] --> Explicit{Valid explicit currency choice?}
+    Explicit -->|yes| Choice[Use and remember explicit choice]
+    Explicit -->|no| Default[Use localeDefaults currency]
+    Choice --> Pair{Settlement equals display?}
+    Default --> Pair
+    Pair -->|yes| Exact[Format authoritative amount]
+    Pair -->|no| Quote[Require direct base to quote pair]
+    Quote --> Display[Show indicative conversion + asOf]
+    Exact --> Disclosure[Show settlement currency]
+    Display --> Disclosure
+```
+
+Every amount is converted from the selected `priceRef`'s own settlement
+currency. This is important when one stable plan offers monthly and annual
+prices, or Cloud packages settle in one currency and a self-hosted licence in
+another. Indirect or undated conversion is rejected; a displayed amount is
+never accepted as provider settlement evidence.
+
+## Perpetual self-hosted licence
+
+```mermaid
+flowchart LR
+    Select[Select perpetual licence] --> Verify[Verify one-time settlement]
+    Verify --> Provision[Provision self-hosted or hybrid binding]
+    Provision --> Licence[Activate perpetual entitlement]
+    Licence --> Included[Declared maintenance periods included]
+    Included --> Renewal{Renewal policy}
+    Renewal -->|optional| Keep[Licence remains; maintenance may end]
+    Renewal -->|automatic after notice| Notice[Issue notice before recurring charge]
+```
+
+A perpetual licence is not a Cloud usage subscription. Optional maintenance is
+a separate recurring settlement and its end cannot silently disable a granted
+perpetual entitlement unless an external legal/licence contract explicitly
+defines a different product.
 
 ## Webhook/event processing
 
@@ -112,6 +187,12 @@ reference, not a raw exception containing secrets.
 | Billing verified, provisioning pending | `paid_pending_provisioning` | process durable outbox |
 | Provisioning failed | `failed` | bounded retry or human remediation |
 | Plan change partially completed | `plan_change_pending` | retain old active entitlements |
+| Add-on incompatible with current base plan or metric | `denied` | select a compatible versioned add-on |
+| UI claims top-up credit before payment verification | `billing_pending` | verify transaction server-side |
+| Usage grant exhausted or expired | unavailable allowance | stop, use another valid grant or purchase explicitly |
+| Missing base/quote pair for locale currency | settlement amount only | do not fabricate an indicative conversion |
+| Request omits or mismatches priceRef | `denied` | select one declared interval and exact versioned price |
+| Maintenance not renewed | perpetual licence remains active | end maintenance services according to policy |
 | Trial ends without eligible conversion | `expired` | require a new explicit selection |
 
 No failure path stores payment credentials or turns a transport-level success

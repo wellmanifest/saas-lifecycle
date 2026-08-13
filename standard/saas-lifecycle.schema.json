@@ -16,6 +16,7 @@
     "accountRef": {"type": "string", "pattern": "^account://[a-z0-9.-]+/[a-z][a-z0-9._:-]*$", "maxLength": 240},
     "tenantRef": {"type": "string", "pattern": "^tenant://[a-z0-9.-]+/[a-z][a-z0-9._:-]*$", "maxLength": 240},
     "planRef": {"type": "string", "pattern": "^plan://[a-z0-9.-]+/[a-z][a-z0-9._:-]*/v[1-9][0-9]*$", "maxLength": 240},
+    "priceRef": {"type": "string", "pattern": "^price://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
     "providerRef": {"type": "string", "pattern": "^provider://[a-z0-9.-]+/[a-z][a-z0-9._:-]*$", "maxLength": 240},
     "billingRef": {"type": "string", "pattern": "^billing://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
     "intentRef": {"type": "string", "pattern": "^intent://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
@@ -25,12 +26,14 @@
     "outboxRef": {"type": "string", "pattern": "^outbox://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
     "deploymentRef": {"type": "string", "pattern": "^deployment://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
     "entitlementRef": {"type": "string", "pattern": "^entitlement://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
+    "metricRef": {"type": "string", "pattern": "^metric://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
     "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
     "settlement": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["currency", "amountMinor", "interval", "authoritative"],
+      "required": ["priceRef", "currency", "amountMinor", "interval", "authoritative"],
       "properties": {
+        "priceRef": {"$ref": "#/$defs/priceRef"},
         "currency": {"$ref": "#/$defs/currency"},
         "amountMinor": {"type": "integer", "minimum": 0, "maximum": 1000000000},
         "interval": {"enum": ["month", "year", "one-time"]},
@@ -51,57 +54,183 @@
         "cancelBeforeCharge": {"const": true}
       }
     },
+    "usageAllowanceRecurring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metricRef", "includedUnits", "reset", "exhaustion"],
+      "properties": {
+        "metricRef": {"$ref": "#/$defs/metricRef"},
+        "includedUnits": {"type": "integer", "minimum": 1, "maximum": 1000000000000},
+        "reset": {"enum": ["month", "year", "billing-interval"]},
+        "exhaustion": {"enum": ["block", "prepaid-addon", "metered-overage"]}
+      }
+    },
+    "usageAllowancePrepaid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metricRef", "includedUnits", "reset", "validityDays", "exhaustion"],
+      "properties": {
+        "metricRef": {"$ref": "#/$defs/metricRef"},
+        "includedUnits": {"type": "integer", "minimum": 1, "maximum": 1000000000000},
+        "reset": {"const": "never"},
+        "validityDays": {"type": "integer", "minimum": 1, "maximum": 3650},
+        "exhaustion": {"const": "block"}
+      }
+    },
+    "maintenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["settlement", "includedPeriods", "renewal"],
+      "properties": {
+        "settlement": {
+          "allOf": [
+            {"$ref": "#/$defs/settlement"},
+            {"properties": {"interval": {"enum": ["month", "year"]}}}
+          ]
+        },
+        "includedPeriods": {"type": "integer", "minimum": 0, "maximum": 10},
+        "renewal": {"enum": ["optional", "automatic-after-notice"]}
+      }
+    },
+    "commercialFlatSubscription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {"type": {"const": "flat-subscription"}}
+    },
+    "commercialUsageSubscription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "usageAllowance"],
+      "properties": {
+        "type": {"const": "usage-subscription"},
+        "usageAllowance": {"$ref": "#/$defs/usageAllowanceRecurring"}
+      }
+    },
+    "commercialPrepaidAddon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "usageAllowance", "compatiblePlanRefs"],
+      "properties": {
+        "type": {"const": "prepaid-addon"},
+        "usageAllowance": {"$ref": "#/$defs/usageAllowancePrepaid"},
+        "compatiblePlanRefs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/planRef"}
+        }
+      }
+    },
+    "commercialPerpetualLicense": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {"const": "perpetual-license"},
+        "maintenance": {"$ref": "#/$defs/maintenance"}
+      }
+    },
+    "commercialModel": {
+      "oneOf": [
+        {"$ref": "#/$defs/commercialFlatSubscription"},
+        {"$ref": "#/$defs/commercialUsageSubscription"},
+        {"$ref": "#/$defs/commercialPrepaidAddon"},
+        {"$ref": "#/$defs/commercialPerpetualLicense"}
+      ]
+    },
     "plan": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ref", "name", "settlement", "entitlements", "public"],
+      "required": ["ref", "name", "settlements", "commercial", "deploymentMode", "entitlements", "public"],
       "properties": {
         "ref": {"$ref": "#/$defs/planRef"},
         "name": {"type": "string", "minLength": 1, "maxLength": 120},
-        "settlement": {"$ref": "#/$defs/settlement"},
+        "settlements": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {"$ref": "#/$defs/settlement"}
+        },
+        "commercial": {"$ref": "#/$defs/commercialModel"},
+        "deploymentMode": {"enum": ["cloud", "self-hosted", "hybrid"]},
+        "capabilityParityGroup": {"$ref": "#/$defs/identifier"},
         "entitlements": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/entitlementRef"}},
         "trial": {"$ref": "#/$defs/trial"},
         "public": {"type": "boolean"}
-      }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"commercial": {"properties": {"type": {"enum": ["flat-subscription", "usage-subscription"]}}}}},
+          "then": {"properties": {"settlements": {"items": {"properties": {"interval": {"enum": ["month", "year"]}}}}}}
+        },
+        {
+          "if": {"properties": {"commercial": {"properties": {"type": {"enum": ["prepaid-addon", "perpetual-license"]}}}}},
+          "then": {"properties": {"settlements": {"maxItems": 1, "items": {"properties": {"interval": {"const": "one-time"}}}}}}
+        },
+        {
+          "if": {
+            "properties": {
+              "commercial": {
+                "properties": {"type": {"const": "perpetual-license"}}
+              }
+            }
+          },
+          "then": {"properties": {"deploymentMode": {"enum": ["self-hosted", "hybrid"]}}}
+        }
+      ]
     },
     "displayQuote": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["currency", "rateNumerator", "rateDenominator", "asOf", "indicative"],
+      "required": ["baseCurrency", "quoteCurrency", "rateNumerator", "rateDenominator", "asOf", "indicative"],
       "properties": {
-        "currency": {"$ref": "#/$defs/currency"},
+        "baseCurrency": {"$ref": "#/$defs/currency"},
+        "quoteCurrency": {"$ref": "#/$defs/currency"},
         "rateNumerator": {"type": "integer", "minimum": 1, "maximum": 1000000000},
         "rateDenominator": {"type": "integer", "minimum": 1, "maximum": 1000000000},
         "asOf": {"type": "string", "format": "date"},
         "indicative": {"const": true}
       }
     },
+    "localeDefault": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locale", "currency"],
+      "properties": {
+        "locale": {"type": "string", "pattern": "^[a-z]{2,3}(?:-[A-Z]{2})?$"},
+        "currency": {"$ref": "#/$defs/currency"}
+      }
+    },
     "offer": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["$schema", "schema", "offerId", "version", "plans", "displayQuotes", "legalPolicyRef"],
+      "required": ["$schema", "schema", "offerId", "version", "plans", "localeDefaults", "displayQuotes", "legalPolicyRef"],
       "properties": {
         "$schema": {"const": "https://wellmanifest.dev/schemas/saas-lifecycle/v1"},
         "schema": {"const": "wellmanifest.saas-offer/v1"},
         "offerId": {"$ref": "#/$defs/identifier"},
         "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$"},
         "plans": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/plan"}},
-        "displayQuotes": {"type": "array", "maxItems": 32, "items": {"$ref": "#/$defs/displayQuote"}},
+        "localeDefaults": {"type": "array", "minItems": 1, "maxItems": 64, "items": {"$ref": "#/$defs/localeDefault"}},
+        "displayQuotes": {"type": "array", "maxItems": 1024, "items": {"$ref": "#/$defs/displayQuote"}},
         "legalPolicyRef": {"type": "string", "pattern": "^policy://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320}
       }
     },
     "request": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["$schema", "schema", "requestId", "operation", "accountRef", "tenantRef", "planRef", "billingRef", "intentRef", "grantRef", "planHash"],
+      "required": ["$schema", "schema", "requestId", "operation", "accountRef", "tenantRef", "planRef", "priceRef", "billingRef", "intentRef", "grantRef", "planHash"],
       "properties": {
         "$schema": {"const": "https://wellmanifest.dev/schemas/saas-lifecycle/v1"},
         "schema": {"const": "wellmanifest.saas-lifecycle-request/v1"},
         "requestId": {"$ref": "#/$defs/identifier"},
-        "operation": {"enum": ["inspect", "signup", "select_plan", "start_trial", "confirm_subscription", "request_plan_change", "cancel"]},
+        "operation": {"enum": ["inspect", "signup", "select_plan", "start_trial", "confirm_subscription", "purchase_addon", "request_plan_change", "cancel"]},
         "accountRef": {"$ref": "#/$defs/accountRef"},
         "tenantRef": {"$ref": "#/$defs/tenantRef"},
         "planRef": {"$ref": "#/$defs/planRef"},
+        "priceRef": {"$ref": "#/$defs/priceRef"},
         "billingRef": {"$ref": "#/$defs/billingRef"},
         "intentRef": {"$ref": "#/$defs/intentRef"},
         "grantRef": {"$ref": "#/$defs/grantRef"},
@@ -142,7 +271,7 @@
       "required": ["eventRef", "type", "digest", "idempotencyKey", "signatureVerified", "verifiedAt", "processedAt"],
       "properties": {
         "eventRef": {"$ref": "#/$defs/eventRef"},
-        "type": {"enum": ["subscription_activated", "subscription_suspended", "subscription_cancelled", "subscription_expired", "payment_completed", "payment_failed"]},
+        "type": {"enum": ["subscription_activated", "subscription_suspended", "subscription_cancelled", "subscription_expired", "payment_completed", "addon_payment_completed", "payment_failed"]},
         "digest": {"$ref": "#/$defs/sha256Ref"},
         "idempotencyKey": {"$ref": "#/$defs/identifier"},
         "signatureVerified": {"const": true},
@@ -169,10 +298,27 @@
         {"if": {"properties": {"state": {"const": "failed"}}, "required": ["state"]}, "then": {"required": ["errorEvidenceRef"]}}
       ]
     },
+    "usageGrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourcePlanRef", "priceRef", "metricRef", "unitsGranted", "unitsRemaining", "validFrom", "expiresAt", "billingRef", "verificationMode", "verifiedAt"],
+      "properties": {
+        "sourcePlanRef": {"$ref": "#/$defs/planRef"},
+        "priceRef": {"$ref": "#/$defs/priceRef"},
+        "metricRef": {"$ref": "#/$defs/metricRef"},
+        "unitsGranted": {"type": "integer", "minimum": 1, "maximum": 1000000000000},
+        "unitsRemaining": {"type": "integer", "minimum": 0, "maximum": 1000000000000},
+        "validFrom": {"type": "string", "format": "date-time"},
+        "expiresAt": {"type": "string", "format": "date-time"},
+        "billingRef": {"$ref": "#/$defs/billingRef"},
+        "verificationMode": {"const": "server-side"},
+        "verifiedAt": {"type": "string", "format": "date-time"}
+      }
+    },
     "lifecycle": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["$schema", "schema", "accountRef", "tenantRef", "currentPlanRef", "state", "version", "updatedAt", "events"],
+      "required": ["$schema", "schema", "accountRef", "tenantRef", "currentPlanRef", "state", "version", "updatedAt", "events", "usageGrants"],
       "properties": {
         "$schema": {"const": "https://wellmanifest.dev/schemas/saas-lifecycle/v1"},
         "schema": {"const": "wellmanifest.saas-lifecycle-state/v1"},
@@ -185,7 +331,8 @@
         "trial": {"$ref": "#/$defs/trialState"},
         "subscription": {"$ref": "#/$defs/subscription"},
         "provisioning": {"$ref": "#/$defs/provisioning"},
-        "events": {"type": "array", "maxItems": 10000, "items": {"$ref": "#/$defs/billingEvent"}}
+        "events": {"type": "array", "maxItems": 10000, "items": {"$ref": "#/$defs/billingEvent"}},
+        "usageGrants": {"type": "array", "maxItems": 10000, "items": {"$ref": "#/$defs/usageGrant"}}
       },
       "allOf": [
         {"if": {"properties": {"state": {"enum": ["trial_active", "trial_expiring"]}}, "required": ["state"]}, "then": {"required": ["trial"]}},
@@ -196,7 +343,7 @@
     "receipt": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["$schema", "schema", "requestId", "accountRef", "tenantRef", "planRef", "inputHash", "planHash", "outcome", "startedAt", "completedAt", "evidenceRefs", "secretsRedacted", "paymentDataStored"],
+      "required": ["$schema", "schema", "requestId", "accountRef", "tenantRef", "planRef", "priceRef", "inputHash", "planHash", "outcome", "startedAt", "completedAt", "evidenceRefs", "secretsRedacted", "paymentDataStored"],
       "properties": {
         "$schema": {"const": "https://wellmanifest.dev/schemas/saas-lifecycle/v1"},
         "schema": {"const": "wellmanifest.saas-lifecycle-receipt/v1"},
@@ -204,9 +351,10 @@
         "accountRef": {"$ref": "#/$defs/accountRef"},
         "tenantRef": {"$ref": "#/$defs/tenantRef"},
         "planRef": {"$ref": "#/$defs/planRef"},
+        "priceRef": {"$ref": "#/$defs/priceRef"},
         "inputHash": {"$ref": "#/$defs/sha256"},
         "planHash": {"$ref": "#/$defs/sha256"},
-        "outcome": {"enum": ["denied", "accepted", "trial_started", "billing_pending", "billing_verified", "provisioning_queued", "activated", "cancelled", "failed"]},
+        "outcome": {"enum": ["denied", "accepted", "trial_started", "billing_pending", "billing_verified", "provisioning_queued", "activated", "addon_activated", "cancelled", "failed"]},
         "startedAt": {"type": "string", "format": "date-time"},
         "completedAt": {"type": "string", "format": "date-time"},
         "evidenceRefs": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/evidenceRef"}},
