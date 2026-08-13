@@ -1,0 +1,23 @@
+[2026-08-12 autonomous baseline]
+USER_AUTHORIZATION=local baseline commit; no push; no remote
+BASE_SHA=73deba07f7c7300dd67f909f1496f605f39e20ed
+
+[2026-08-12 validation]
+governance=PASS errors=0 warnings=0
+draft202012_metaschema=PASS
+host_conformance=PASS positive_variants=4 adversarial_rejected=15
+docker_conformance=PASS network_mode=none read_only=true cap_drop=ALL no_new_privileges=true
+schema_digest=sha256:23719fdcd10049c25540057afb7243751f159ef9abfaaa0a34d4464622beb112
+grammar_digest=sha256:b2c5d381ee30d73e8f15a3da505328c0fc59835fcb77e68004d7e5da750ab30f
+git_diff_check=PASS
+2026-08-12 publication revalidation
+python3 standard/conformance.py --all
+ok=true positiveVariants=4 adversarialRejected=15
+schemaDigest=sha256:23719fdcd10049c25540057afb7243751f159ef9abfaaa0a34d4464622beb112
+grammarDigest=sha256:b2c5d381ee30d73e8f15a3da505328c0fc59835fcb77e68004d7e5da750ab30f
+docker compose run --rm conformance
+ok=true positiveVariants=4 adversarialRejected=15
+./project/governance-check.sh --actor agent
+GOV-PASS: passed (0 errors, 0 warnings)
+git diff --check
+exit=0

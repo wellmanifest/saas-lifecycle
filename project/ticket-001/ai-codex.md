@@ -28,14 +28,23 @@ coordinates outside the lifecycle document.
   from the request to execute this work.
 - Adopted published `wellmanifest/new-project` v0.15.0 at its exact revision.
 - Kept commercial lifecycle semantics separate from generic deployment and POA.
+- Added closed offer, lifecycle request, authoritative state and receipt
+  variants with an intentionally small request-only GBNF language.
+- Made trial conversion, currency authority, provider verification, webhook
+  idempotency and provisioning-outbox boundaries machine-testable.
+- Added architecture/logic diagrams and a dependency-free conformance runner.
+- Passed governance with zero findings, Draft 2020-12 metaschema validation,
+  four positive variants, fifteen adversarial rejections, networkless Docker
+  conformance and `git diff --check`.
 
 ## Blockers
 
-- The repository has no initial Git baseline, so a valid bounded-delivery
-  contract cannot yet be recorded. Implementation remains in PLAN pending
-  explicit authority for a local baseline commit.
-- New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion and trusted merge.
+- The initial-baseline blocker is resolved by the explicitly authorized local
+  commit `73deba07f7c7300dd67f909f1496f605f39e20ed`.
+- The user's explicit push request authorizes public remote creation,
+  ticket-branch publication and pull-request creation for this bounded diff.
+- New authority remains required for destructive action, secret access,
+  material objective expansion and trusted merge.
 
 ## Risks and controls
 

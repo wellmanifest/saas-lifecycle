@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wellmanifest.dev/schemas/saas-lifecycle/v1",
+  "title": "Wellmanifest multi-tenant SaaS lifecycle contracts v1",
+  "description": "Closed provider-neutral contracts for offers, lifecycle requests, account state and secret-free receipts. Documents never prove payment or grant execution authority by themselves.",
+  "oneOf": [
+    {"$ref": "#/$defs/offer"},
+    {"$ref": "#/$defs/request"},
+    {"$ref": "#/$defs/lifecycle"},
+    {"$ref": "#/$defs/receipt"}
+  ],
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 96, "pattern": "^[a-z][a-z0-9._:-]*$"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "sha256Ref": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "accountRef": {"type": "string", "pattern": "^account://[a-z0-9.-]+/[a-z][a-z0-9._:-]*$", "maxLength": 240},
+    "tenantRef": {"type": "string", "pattern": "^tenant://[a-z0-9.-]+/[a-z][a-z0-9._:-]*$", "maxLength": 240},
+    "planRef": {"type": "string", "pattern": "^plan://[a-z0-9.-]+/[a-z][a-z0-9._:-]*/v[1-9][0-9]*$", "maxLength": 240},
+    "providerRef": {"type": "string", "pattern": "^provider://[a-z0-9.-]+/[a-z][a-z0-9._:-]*$", "maxLength": 240},
+    "billingRef": {"type": "string", "pattern": "^billing://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "intentRef": {"type": "string", "pattern": "^intent://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "grantRef": {"type": "string", "pattern": "^grant://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "eventRef": {"type": "string", "pattern": "^event://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "evidenceRef": {"type": "string", "pattern": "^evidence://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/r[1-9][0-9]*$", "maxLength": 320},
+    "outboxRef": {"type": "string", "pattern": "^outbox://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "deploymentRef": {"type": "string", "pattern": "^deployment://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
+    "entitlementRef": {"type": "string", "pattern": "^entitlement://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "settlement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["currency", "amountMinor", "interval", "authoritative"],
+      "properties": {
+        "currency": {"$ref": "#/$defs/currency"},
+        "amountMinor": {"type": "integer", "minimum": 0, "maximum": 1000000000},
+        "interval": {"enum": ["month", "year", "one-time"]},
+        "authoritative": {"const": true}
+      }
+    },
+    "trial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["days", "priceMinor", "requiresPaymentMethod", "conversionPlanRef", "conversionMode", "noticeDays", "cancelBeforeCharge"],
+      "properties": {
+        "days": {"type": "integer", "minimum": 1, "maximum": 90},
+        "priceMinor": {"const": 0},
+        "requiresPaymentMethod": {"type": "boolean"},
+        "conversionPlanRef": {"$ref": "#/$defs/planRef"},
+        "conversionMode": {"enum": ["explicit-accept", "scheduled-after-notice"]},
+        "noticeDays": {"type": "integer", "minimum": 1, "maximum": 30},
+        "cancelBeforeCharge": {"const": true}
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "name", "settlement", "entitlements", "public"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/planRef"},
+        "name": {"type": "string", "minLength": 1, "maxLength": 120},
+        "settlement": {"$ref": "#/$defs/settlement"},
+        "entitlements": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/entitlementRef"}},
+        "trial": {"$ref": "#/$defs/trial"},
+        "public": {"type": "boolean"}
+      }
+    },
+    "displayQuote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["currency", "rateNumerator", "rateDenominator", "asOf", "indicative"],
+      "properties": {
+        "currency": {"$ref": "#/$defs/currency"},
+        "rateNumerator": {"type": "integer", "minimum": 1, "maximum": 1000000000},
+        "rateDenominator": {"type": "integer", "minimum": 1, "maximum": 1000000000},
+        "asOf": {"type": "string", "format": "date"},
+        "indicative": {"const": true}
+      }
+    },
+    "offer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$schema", "schema", "offerId", "version", "plans", "displayQuotes", "legalPolicyRef"],
+      "properties": {
+        "$schema": {"const": "https://wellmanifest.dev/schemas/saas-lifecycle/v1"},
+        "schema": {"const": "wellmanifest.saas-offer/v1"},
+        "offerId": {"$ref": "#/$defs/identifier"},
+        "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$"},
+        "plans": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/plan"}},
+        "displayQuotes": {"type": "array", "maxItems": 32, "items": {"$ref": "#/$defs/displayQuote"}},
+        "legalPolicyRef": {"type": "string", "pattern": "^policy://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320}
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$schema", "schema", "requestId", "operation", "accountRef", "tenantRef", "planRef", "billingRef", "intentRef", "grantRef", "planHash"],
+      "properties": {
+        "$schema": {"const": "https://wellmanifest.dev/schemas/saas-lifecycle/v1"},
+        "schema": {"const": "wellmanifest.saas-lifecycle-request/v1"},
+        "requestId": {"$ref": "#/$defs/identifier"},
+        "operation": {"enum": ["inspect", "signup", "select_plan", "start_trial", "confirm_subscription", "request_plan_change", "cancel"]},
+        "accountRef": {"$ref": "#/$defs/accountRef"},
+        "tenantRef": {"$ref": "#/$defs/tenantRef"},
+        "planRef": {"$ref": "#/$defs/planRef"},
+        "billingRef": {"$ref": "#/$defs/billingRef"},
+        "intentRef": {"$ref": "#/$defs/intentRef"},
+        "grantRef": {"$ref": "#/$defs/grantRef"},
+        "planHash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "trialState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startedAt", "endsAt", "conversionPlanRef", "conversionMode", "noticeAt", "paymentMethodPresent", "cancelledAt"],
+      "properties": {
+        "startedAt": {"type": "string", "format": "date-time"},
+        "endsAt": {"type": "string", "format": "date-time"},
+        "conversionPlanRef": {"$ref": "#/$defs/planRef"},
+        "conversionMode": {"enum": ["explicit-accept", "scheduled-after-notice"]},
+        "noticeAt": {"type": "string", "format": "date-time"},
+        "paymentMethodPresent": {"type": "boolean"},
+        "cancelledAt": {"oneOf": [{"type": "null"}, {"type": "string", "format": "date-time"}]}
+      }
+    },
+    "subscription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["providerRef", "billingRef", "providerPlanRef", "status", "verificationMode", "verifiedAt", "settlement"],
+      "properties": {
+        "providerRef": {"$ref": "#/$defs/providerRef"},
+        "billingRef": {"$ref": "#/$defs/billingRef"},
+        "providerPlanRef": {"$ref": "#/$defs/billingRef"},
+        "status": {"enum": ["pending", "active", "suspended", "cancelled", "expired"]},
+        "verificationMode": {"const": "server-side"},
+        "verifiedAt": {"type": "string", "format": "date-time"},
+        "settlement": {"$ref": "#/$defs/settlement"}
+      }
+    },
+    "billingEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventRef", "type", "digest", "idempotencyKey", "signatureVerified", "verifiedAt", "processedAt"],
+      "properties": {
+        "eventRef": {"$ref": "#/$defs/eventRef"},
+        "type": {"enum": ["subscription_activated", "subscription_suspended", "subscription_cancelled", "subscription_expired", "payment_completed", "payment_failed"]},
+        "digest": {"$ref": "#/$defs/sha256Ref"},
+        "idempotencyKey": {"$ref": "#/$defs/identifier"},
+        "signatureVerified": {"const": true},
+        "verifiedAt": {"type": "string", "format": "date-time"},
+        "processedAt": {"type": "string", "format": "date-time"}
+      }
+    },
+    "provisioning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outboxRef", "idempotencyKey", "deploymentRef", "state", "attempts", "updatedAt"],
+      "properties": {
+        "outboxRef": {"$ref": "#/$defs/outboxRef"},
+        "idempotencyKey": {"$ref": "#/$defs/identifier"},
+        "deploymentRef": {"$ref": "#/$defs/deploymentRef"},
+        "state": {"enum": ["pending", "running", "completed", "failed"]},
+        "attempts": {"type": "integer", "minimum": 0, "maximum": 20},
+        "updatedAt": {"type": "string", "format": "date-time"},
+        "externalRef": {"type": "string", "pattern": "^resource://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+        "errorEvidenceRef": {"$ref": "#/$defs/evidenceRef"}
+      },
+      "allOf": [
+        {"if": {"properties": {"state": {"const": "completed"}}, "required": ["state"]}, "then": {"required": ["externalRef"]}},
+        {"if": {"properties": {"state": {"const": "failed"}}, "required": ["state"]}, "then": {"required": ["errorEvidenceRef"]}}
+      ]
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$schema", "schema", "accountRef", "tenantRef", "currentPlanRef", "state", "version", "updatedAt", "events"],
+      "properties": {
+        "$schema": {"const": "https://wellmanifest.dev/schemas/saas-lifecycle/v1"},
+        "schema": {"const": "wellmanifest.saas-lifecycle-state/v1"},
+        "accountRef": {"$ref": "#/$defs/accountRef"},
+        "tenantRef": {"$ref": "#/$defs/tenantRef"},
+        "currentPlanRef": {"$ref": "#/$defs/planRef"},
+        "state": {"enum": ["requested", "membership_verified", "trial_active", "trial_expiring", "payment_pending", "paid_pending_provisioning", "active", "plan_change_pending", "suspended", "cancelled", "expired", "failed"]},
+        "version": {"type": "integer", "minimum": 1},
+        "updatedAt": {"type": "string", "format": "date-time"},
+        "trial": {"$ref": "#/$defs/trialState"},
+        "subscription": {"$ref": "#/$defs/subscription"},
+        "provisioning": {"$ref": "#/$defs/provisioning"},
+        "events": {"type": "array", "maxItems": 10000, "items": {"$ref": "#/$defs/billingEvent"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"state": {"enum": ["trial_active", "trial_expiring"]}}, "required": ["state"]}, "then": {"required": ["trial"]}},
+        {"if": {"properties": {"state": {"enum": ["paid_pending_provisioning", "active", "plan_change_pending", "suspended"]}}, "required": ["state"]}, "then": {"required": ["subscription"]}},
+        {"if": {"properties": {"state": {"enum": ["paid_pending_provisioning", "active", "plan_change_pending"]}}, "required": ["state"]}, "then": {"required": ["provisioning"]}}
+      ]
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$schema", "schema", "requestId", "accountRef", "tenantRef", "planRef", "inputHash", "planHash", "outcome", "startedAt", "completedAt", "evidenceRefs", "secretsRedacted", "paymentDataStored"],
+      "properties": {
+        "$schema": {"const": "https://wellmanifest.dev/schemas/saas-lifecycle/v1"},
+        "schema": {"const": "wellmanifest.saas-lifecycle-receipt/v1"},
+        "requestId": {"$ref": "#/$defs/identifier"},
+        "accountRef": {"$ref": "#/$defs/accountRef"},
+        "tenantRef": {"$ref": "#/$defs/tenantRef"},
+        "planRef": {"$ref": "#/$defs/planRef"},
+        "inputHash": {"$ref": "#/$defs/sha256"},
+        "planHash": {"$ref": "#/$defs/sha256"},
+        "outcome": {"enum": ["denied", "accepted", "trial_started", "billing_pending", "billing_verified", "provisioning_queued", "activated", "cancelled", "failed"]},
+        "startedAt": {"type": "string", "format": "date-time"},
+        "completedAt": {"type": "string", "format": "date-time"},
+        "evidenceRefs": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/evidenceRef"}},
+        "secretsRedacted": {"const": true},
+        "paymentDataStored": {"const": false}
+      }
+    }
+  }
+}
