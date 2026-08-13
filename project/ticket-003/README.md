@@ -3,7 +3,7 @@
 - **ID**: ticket-003
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-08-13
 
 ## Goal and scope
@@ -51,4 +51,7 @@ The owner's “tak” in response to the remaining provider/deployment profile
 roadmap item is recorded as `SESSION_EXECUTION_AUTHORIZATION`. It authorizes
 planning, editing and local validation inside `intent.json` without a second
 confirmation. It does not authorize provider calls, deployment, secret access,
-external publication or trusted merge.
+external publication or trusted merge. The follow-up “kontynuuj” explicitly
+authorizes publishing the exact ticket branch, opening its pull request and
+pursuing protected integration into `main`. It does not replace exact-head
+trusted approval or authorize a direct/bypass merge.

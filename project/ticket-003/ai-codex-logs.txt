@@ -50,3 +50,10 @@ PASS: static and governance gates
   `GOV-PASS: passed (0 errors, 0 warnings)`.
 - Exactly four implementation files changed across the two approved components;
   no runtime dependency, credential, provider call or deployment was added.
+
+Publication authorization
+- The owner follow-up “kontynuuj” authorizes publishing the exact ticket branch,
+  opening its pull request and pursuing protected integration into `main`.
+- Exact-head repository/PR/ticket/actor bindings, the remote lifecycle gate and
+  trusted Validator approval remain mandatory. No direct/bypass merge, provider
+  call or deployment is authorized.

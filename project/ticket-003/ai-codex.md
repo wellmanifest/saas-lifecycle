@@ -52,9 +52,9 @@ the exact account, tenant, plan, price, amount, currency or deployment request.
 ## Blockers
 
 - None inside the recorded intent; proceed without a second confirmation.
-- The implementation is locally complete and remains `IN_PROGRESS / VALIDATION`
-  because publication and protected integration were not authorized by the
-  owner's one-word execution confirmation.
+- The implementation is locally complete and is now `IN_PROGRESS / PUBLICATION`.
+  The owner's follow-up “kontynuuj” authorizes branch publication, pull-request
+  creation and pursuit of protected integration after exact-head validation.
 - New authority remains required for destructive action, secret access, new
-  external coordination, material objective expansion, publication and trusted
-  merge.
+  external coordination, material objective expansion and trusted merge outside
+  the protected repository boundary.
