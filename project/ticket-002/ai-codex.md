@@ -31,6 +31,9 @@ retaining its provider, deployment, legal and metering authority boundaries.
 
 - Initialized the bounded ticket and recorded SESSION_EXECUTION_AUTHORIZATION
   from the request to execute this work.
+- Recorded the owner's “a powinny być” follow-up as explicit authorization to
+  publish this branch, open a pull request and pursue its protected integration
+  after exact-head trusted validation. It is not permission to bypass review.
 - Reviewed the merged v1 schema, request grammar, conformance runner,
   architecture and logic-flow guidance against the action-priced Basic/Pro,
   PrePaid, localized-currency and separate On-Premise implementation.
@@ -66,8 +69,9 @@ retaining its provider, deployment, legal and metering authority boundaries.
 ## Blockers
 
 - None inside the recorded intent; proceed without a second confirmation.
-- The branch is locally complete and stays `IN_PROGRESS / PUBLICATION` until a
-  future exact-head trusted review and merge; this request did not authorize
-  remote publication.
+- The branch is locally complete and remains `IN_PROGRESS / PUBLICATION` while
+  remote review and protected integration run. Trusted merge still depends on
+  exact-head repository-bound evidence from an allowed reviewer or Validator
+  App; owner authorization does not replace that trust boundary.
 - New authority remains required for destructive action, secret access, new
   external coordination, material objective expansion and trusted merge.

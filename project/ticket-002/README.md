@@ -59,4 +59,7 @@ rates, process a payment, calculate tax, or deploy customer infrastructure.
 The owner's request to update the standard from the implemented action-pricing
 experience is recorded as `SESSION_EXECUTION_AUTHORIZATION`. It authorizes
 planning, editing and local validation inside this ticket's intent without a
-second confirmation. It is not publication, trusted review or merge approval.
+second confirmation. The follow-up “a powinny być” explicitly authorizes remote
+branch publication, pull-request creation and pursuit of protected integration
+into `main`. It does not bypass exact-head trusted review: merge authority must
+still come from the repository's protected reviewer/validator boundary.

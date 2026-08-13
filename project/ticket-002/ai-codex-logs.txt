@@ -47,3 +47,9 @@ PASS: static and governance gates
   `GOV-PASS: passed (0 errors, 0 warnings)`.
 - Exactly five implementation files changed across the two approved components;
   no dependency, secret, deployment or external publication change occurred.
+
+Publication authorization
+- The owner follow-up “a powinny być” authorizes pushing the exact ticket
+  branch, opening its pull request and pursuing protected merge into `main`.
+- Exact-head trusted review, repository/PR/ticket/actor bindings and the remote
+  lifecycle gate remain mandatory; no direct or bypass merge is authorized.
