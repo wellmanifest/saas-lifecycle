@@ -19,3 +19,8 @@
 
 - Extended dependency-free conformance from 32 to 45 adversarial rejections and
   added immutable adapter schema/example digests.
+
+### Closed
+
+- The repository-scoped Validator App approved exact HEAD `2d4ffc9` and merged
+  pull request #3 as `1182915`; GitHub then deleted the merged remote branch.

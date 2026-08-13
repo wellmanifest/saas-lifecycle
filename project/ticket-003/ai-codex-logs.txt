@@ -57,3 +57,28 @@ Publication authorization
 - Exact-head repository/PR/ticket/actor bindings, the remote lifecycle gate and
   trusted Validator approval remain mandatory. No direct/bypass merge, provider
   call or deployment is authorized.
+
+Protected review and integration
+- Pull request: https://github.com/wellmanifest/saas-lifecycle/pull/3
+- Required `governance / remote lifecycle` passed for exact HEAD
+  `2d4ffc98a586ab7f278e5da97a84c98a196dae49`.
+- External production Validator workflow run `31737288106` validated the
+  repository, pull request, ticket, actor and exact-head bindings.
+- `ifuri-validator-agent[bot]` approved with deterministic decision
+  `D-003-9113`. Advisory `openrouter/z-ai/glm-5.2` also returned `APPROVE` with
+  no findings; the deterministic decision remained the trust root.
+- The Validator merged pull request #3 at 2026-08-13T19:46:19Z as
+  `1182915cc82270568607456fcefe8705796fac1a`.
+- GitHub deleted the merged remote branch. The linked implementation worktree
+  was clean, its HEAD was reachable from `origin/main`, and it was removed and
+  pruned. The integrated local ticket branch was then deleted.
+
+Terminal workspace audit
+- `saas-lifecycle` has one registered checkout on `main` and no local or remote
+  ticket branch.
+- The initial Goal audit identified six clean worktrees owned by separate
+  active or unknown `new-project`, `poa` and `dsl` work. They were preserved
+  rather than treated as disposable data.
+- Repeating `goal governance workspace-check` with those exact six checkout
+  paths allowlisted returned
+  `GOV-WORKSPACE-PASS: passed (0 errors, 0 warnings)`.

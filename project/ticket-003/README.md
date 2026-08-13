@@ -2,8 +2,8 @@
 
 - **ID**: ticket-003
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-13
 
 ## Goal and scope
@@ -55,3 +55,12 @@ external publication or trusted merge. The follow-up “kontynuuj” explicitly
 authorizes publishing the exact ticket branch, opening its pull request and
 pursuing protected integration into `main`. It does not replace exact-head
 trusted approval or authorize a direct/bypass merge.
+
+## Publication result
+
+Pull request #3 was approved for exact HEAD
+`2d4ffc98a586ab7f278e5da97a84c98a196dae49` by the repository-scoped
+`ifuri-validator-agent` App and merged into `main` as
+`1182915cc82270568607456fcefe8705796fac1a`. GitHub deleted the merged remote
+ticket branch automatically. This governance-only closure is recorded from the
+integrated default branch.
