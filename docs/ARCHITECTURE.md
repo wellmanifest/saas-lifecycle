@@ -8,7 +8,13 @@ not authenticate users, process payments, deploy tenants or configure DNS.
 - `wellmanifest/dsl` constrains lifecycle requests;
 - POA compiles requests into exact plans, grants and receipts;
 - `wellmanifest/deployment` executes an exact tenant deployment binding;
-- payment, identity and tax/legal systems remain external authorities.
+- `wellmanifest/product-lifecycle` owns product identity, stage and
+  jurisdiction-aware catalog availability;
+- `wellmanifest/legal-lifecycle` owns licenses, policies and location
+  rules bound by the existing `legalPolicyRef`;
+- `wellmanifest/agent` may later bind operational `agentRef` values;
+- payment, identity and tax/legal systems remain external authorities. This
+  module does not define license text, tax tables or refund law.
 
 ```mermaid
 flowchart LR
@@ -72,6 +78,8 @@ flowchart LR
 | Provisioning outbox | Durable exact tenant/plan work item | New tenant per retry, raw deployment coordinates |
 | Deployment authority | Exact target plan and grant | Billing state as deployment authority |
 | Receipt store | Redacted outcome/evidence hashes | Provider payload, credentials, personal/payment data |
+| Product catalog | Product identity and stage | Prices, license text, deployment hosts |
+| Legal pack | Versioned policy, license and location | Commercial settlement or tenant activation |
 
 ## Tenant hierarchy
 
