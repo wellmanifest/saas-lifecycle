@@ -1,0 +1,112 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-002",
+  "summary": "Standardize action-based offers and currency presentation",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-002/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "standard/saas-lifecycle.schema.json",
+    "standard/saas-lifecycle.v1.gbnf",
+    "standard/conformance.py",
+    "docs/ARCHITECTURE.md",
+    "docs/LOGIC_FLOW.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": ["ticket-001"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a9b51e5106af126316045a98362dd8d43d553ff3",
+    "targetBranch": "main",
+    "outcome": "The experimental SaaS lifecycle standard represents generic usage-priced subscriptions, capability-equivalent allowance tiers, verified expiring PrePaid add-ons, localized multi-currency presentation and separate self-hosted perpetual licensing without making seats, actions, browsers or payment adapters implicit authorities.",
+    "nonGoals": [
+      "Define the meaning or metering algorithm of a product-specific action",
+      "Choose plan prices, settlement currencies or exchange-rate sources",
+      "Calculate VAT, refunds or jurisdiction-specific consumer rights",
+      "Process payments, publish offers or deploy customer workloads",
+      "Store credentials, raw payment payloads or tenant coordinates"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep one closed provider-neutral document family. Plans declare a commercial kind, deployment mode, one or more versioned priceRef options and optional generic usage allowance. Capability parity is asserted by an offer-scoped group and validated by exact entitlement equality. A prepaid add-on has one-time settlement, never-reset allowance, explicit validity and compatible base plans; buying it issues a server-verified usage grant without replacing currentPlanRef. Display quotes become explicit base/quote pairs, and locale defaults require direct quote coverage unless the requested display currency already equals settlement. Perpetual self-hosted items use one-time settlement and may expose optional recurring maintenance while remaining outside Cloud usage renewal.",
+      "components": [
+        {
+          "name": "normative-contract",
+          "paths": [
+            "standard/saas-lifecycle.schema.json",
+            "standard/saas-lifecycle.v1.gbnf"
+          ]
+        },
+        {
+          "name": "conformance-and-guidance",
+          "paths": [
+            "standard/conformance.py",
+            "docs/ARCHITECTURE.md",
+            "docs/LOGIC_FLOW.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "Extend the experimental wellmanifest.saas-offer/v1, request, state and receipt shapes before stable release"
+      ],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket-002 implementation and validation commits; ticket-001 remains the integrated v1 baseline."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-002/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-002/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-002/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-002/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["python3 standard/conformance.py --all"],
+        "evidence": "project/ticket-002/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "python3 -m py_compile standard/conformance.py",
+          "docker compose run --rm --build conformance",
+          "./project/governance-check.sh --actor agent",
+          "git diff --check"
+        ],
+        "evidence": "project/ticket-002/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

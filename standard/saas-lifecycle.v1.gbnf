@@ -3,12 +3,13 @@
 # email, payment status, webhook payload/signature, raw tenant coordinates,
 # credentials, deployment commands or an inline authority decision.
 root ::= request
-request ::= "{\"$schema\":\"https://wellmanifest.dev/schemas/saas-lifecycle/v1\",\"schema\":\"wellmanifest.saas-lifecycle-request/v1\",\"requestId\":" identifier ",\"operation\":" operation ",\"accountRef\":" account-ref ",\"tenantRef\":" tenant-ref ",\"planRef\":" plan-ref ",\"billingRef\":" billing-ref ",\"intentRef\":" intent-ref ",\"grantRef\":" grant-ref ",\"planHash\":" sha256 "}"
-operation ::= "\"inspect\"" | "\"signup\"" | "\"select_plan\"" | "\"start_trial\"" | "\"confirm_subscription\"" | "\"request_plan_change\"" | "\"cancel\""
+request ::= "{\"$schema\":\"https://wellmanifest.dev/schemas/saas-lifecycle/v1\",\"schema\":\"wellmanifest.saas-lifecycle-request/v1\",\"requestId\":" identifier ",\"operation\":" operation ",\"accountRef\":" account-ref ",\"tenantRef\":" tenant-ref ",\"planRef\":" plan-ref ",\"priceRef\":" price-ref ",\"billingRef\":" billing-ref ",\"intentRef\":" intent-ref ",\"grantRef\":" grant-ref ",\"planHash\":" sha256 "}"
+operation ::= "\"inspect\"" | "\"signup\"" | "\"select_plan\"" | "\"start_trial\"" | "\"confirm_subscription\"" | "\"purchase_addon\"" | "\"request_plan_change\"" | "\"cancel\""
 identifier ::= "\"" lower id-tail "\""
 account-ref ::= "\"account://" authority "/" identifier-body "\""
 tenant-ref ::= "\"tenant://" authority "/" identifier-body "\""
 plan-ref ::= "\"plan://" authority "/" identifier-body "/v" positive-digits "\""
+price-ref ::= "\"price://" authority "/" path "/v" positive-digits "\""
 billing-ref ::= "\"billing://" authority "/" path "\""
 intent-ref ::= "\"intent://" authority "/" path "\""
 grant-ref ::= "\"grant://" authority "/" path "\""
