@@ -21,3 +21,9 @@
 - networkless pinned Docker build/run: PASS.
 - `./project/governance-check.sh`: GOV-PASS, 0 errors, 0 warnings.
 - `git diff --check`: PASS.
+
+2026-08-14T09:32:00+02:00 PUBLICATION
+- pull request: https://github.com/wellmanifest/saas-lifecycle/pull/4
+- implementation commit: ac99042ebbacfcd2609f69a043b3ab3ab9a63750
+- accepted base: 541330828b1a0850424d73fb3e310e0db284b542
+- trusted current-head review and integration: pending
