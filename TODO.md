@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] [ticket-005](project/ticket-005/README.md) — require the shared Lifecycle
+  DSL domain-conformance gate on pull requests and integrated `main` revisions.
+
 - [x] [ticket-004](project/ticket-004/README.md) — adopt the byte-pinned
   shared Lifecycle DSL validator and enforce exact SaaS tenant graph equality.
 
