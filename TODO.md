@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] [ticket-004](project/ticket-004/README.md) — adopt the byte-pinned
+- [x] [ticket-004](project/ticket-004/README.md) — adopt the byte-pinned
   shared Lifecycle DSL validator and enforce exact SaaS tenant graph equality.
 
 - [x] [ticket-001](project/ticket-001/README.md) — define and validate v1
