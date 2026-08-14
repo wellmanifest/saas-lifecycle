@@ -12,21 +12,47 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
+import lifecycle
+
 
 ROOT = Path(__file__).resolve().parent
 SCHEMA_PATH = ROOT / "saas-lifecycle.schema.json"
 GRAMMAR_PATH = ROOT / "saas-lifecycle.v1.gbnf"
 PROFILE_SCHEMA_PATH = ROOT / "saas-adapter-profile.schema.json"
 PROFILE_EXAMPLES_PATH = ROOT / "adapter-profiles.examples.json"
+LIFECYCLE_PATH = ROOT / "saas-lifecycle.lifecycle"
+LIFECYCLE_VALIDATOR_PATH = ROOT / "lifecycle.py"
 SCHEMA_DIGEST = "659e2d0124b236e86f76786c37bc22bbd326f274eb6b9ca9c3a20d82e33f26cd"
 GRAMMAR_DIGEST = "2565b1c0e93c1f5ee84c299428ef8592e295b4a3337585409ae1ee19644d7690"
 PROFILE_SCHEMA_DIGEST = "060495e3dda6a80bc67d861d55422dff65df912028b0d3a7a598959de3df7054"
 PROFILE_EXAMPLES_DIGEST = "5ed1f16934de26008feafdcdd98577298db2474c8ddf8b5aa0128aadfb52fc49"
+LIFECYCLE_SOURCE_REVISION = "4b5e131a670afb46ca87291479fed7c0fefcf370"
+LIFECYCLE_VALIDATOR_DIGEST = "9c3f3076b5b45408d3eefc34cd567b58821aa565d3fe3bf6339641111079ede0"
+LIFECYCLE_PROFILE_DIGEST = "6b677b2307099b03f188a7391dbf0aa8ec884a6fc97c4a5d249e9c96e388dcd9"
 SCHEMA_URI = "https://wellmanifest.dev/schemas/saas-lifecycle/v1"
 PROFILE_SCHEMA_URI = "https://wellmanifest.dev/schemas/saas-adapter-profile/v1"
 SENSITIVE = re.compile(r"(?:password|passwd|token|secret|cookie|api[-_]?key|card|cvv|private[-_]?key|webhook[-_]?signature)", re.I)
 SAFE_ASSERTIONS = {"secretsRedacted", "paymentDataStored", "signatureVerified"}
 UNSAFE_POINTER_SEGMENT = re.compile(r"(?:password|passwd|token|secret|cookie|api[-_]?key|card|cvv|private[-_]?key|webhook[-_]?signature|host(?:name)?|user(?:name)?|docroot|domain|source[-_]?dir|vault[-_]?url|base[-_]?url)", re.I)
+LIFECYCLE_TRANSITIONS = {
+    ("REQUESTED", "MEMBERSHIP_VERIFIED", "SIGNUP"),
+    ("MEMBERSHIP_VERIFIED", "TRIAL_ACTIVE", "START_TRIAL"),
+    ("MEMBERSHIP_VERIFIED", "PAYMENT_PENDING", "SELECT_PLAN"),
+    ("TRIAL_ACTIVE", "TRIAL_EXPIRING", "TRIAL_NOTICE"),
+    ("TRIAL_ACTIVE", "CANCELLED", "CANCEL"),
+    ("TRIAL_EXPIRING", "PAYMENT_PENDING", "SELECT_PLAN"),
+    ("TRIAL_EXPIRING", "EXPIRED", "EXPIRE"),
+    ("PAYMENT_PENDING", "PAID_PENDING_PROVISIONING", "CONFIRM_SUBSCRIPTION"),
+    ("PAID_PENDING_PROVISIONING", "ACTIVE", "PROVISION"),
+    ("PAID_PENDING_PROVISIONING", "FAILED", "FAIL"),
+    ("ACTIVE", "ACTIVE", "PURCHASE_ADDON"),
+    ("ACTIVE", "PLAN_CHANGE_PENDING", "REQUEST_PLAN_CHANGE"),
+    ("PLAN_CHANGE_PENDING", "ACTIVE", "ACTIVATE_PLAN_CHANGE"),
+    ("ACTIVE", "SUSPENDED", "SUSPEND"),
+    ("ACTIVE", "CANCELLED", "CANCEL"),
+    ("SUSPENDED", "ACTIVE", "RESUME"),
+    ("SUSPENDED", "EXPIRED", "EXPIRE"),
+}
 
 
 class ContractError(ValueError):
@@ -39,6 +65,38 @@ def canonical(value: Any) -> str:
 
 def digest(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
+
+
+def file_digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def lifecycle_name(value: str) -> str:
+    return value.upper().replace("-", "_")
+
+
+def validate_lifecycle_profile(schema: dict[str, Any]) -> None:
+    if file_digest(LIFECYCLE_VALIDATOR_PATH) != LIFECYCLE_VALIDATOR_DIGEST:
+        raise ContractError("pinned lifecycle validator digest mismatch")
+    if file_digest(LIFECYCLE_PATH) != LIFECYCLE_PROFILE_DIGEST:
+        raise ContractError("pinned lifecycle profile digest mismatch")
+    report = lifecycle.validate_path(LIFECYCLE_PATH, lifecycle.embedded_catalog())
+    if not report.valid or len(report.lifecycles) != 1:
+        raise ContractError("Lifecycle DSL profile is invalid")
+    model = report.lifecycles[0]
+    state_values = schema["$defs"]["lifecycle"]["properties"]["state"]["enum"]
+    expected_states = {lifecycle_name(str(value)) for value in state_values}
+    actual_transitions = {
+        (item.source, item.target, item.event) for item in model.transitions
+    }
+    if model.name != "saas-tenant" or set(model.states) != expected_states:
+        raise ContractError("Lifecycle DSL state graph mismatch")
+    if actual_transitions != LIFECYCLE_TRANSITIONS:
+        raise ContractError("Lifecycle DSL transition graph mismatch")
+    if model.summary()["initial_state"] != "REQUESTED":
+        raise ContractError("Lifecycle DSL initial state mismatch")
+    if model.summary()["terminal_states"] != ["CANCELLED", "EXPIRED", "FAILED"]:
+        raise ContractError("Lifecycle DSL terminal state mismatch")
 
 
 def exact(value: Any, required: set[str], optional: set[str] | None = None) -> dict[str, Any]:
@@ -439,6 +497,7 @@ def validate_profile_examples(c:Contracts)->list[dict[str,Any]]:
 
 def run_all()->dict[str,Any]:
     c=Contracts(); c.integrity(); offer,request,state,receipt=offer_example(),request_example(),lifecycle_example(),receipt_example()
+    validate_lifecycle_profile(c.schema)
     validate_offer(c,offer); validate_request(c,request); validate_lifecycle(c,state); validate_receipt(c,receipt)
     profiles=validate_profile_examples(c); paypal,stripe,deployment=profiles
     cases=[]
