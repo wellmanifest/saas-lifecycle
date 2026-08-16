@@ -1,0 +1,142 @@
+{
+  "$schema": "https://raw.githubusercontent.com/wellmanifest/dsl/b7d0595c95e5abbb48ebfdbdae0bc6d43c6f82f4/schemas/dsl-manifest.schema.json",
+  "schema": "wellmanifest.dsl/manifest/v1",
+  "id": "wellmanifest.saas-lifecycle",
+  "name": "Wellmanifest SaaS Lifecycle",
+  "version": "0.1.0-dev",
+  "status": "experimental",
+  "purpose": "Provider-neutral multi-tenant SaaS commercial lifecycle, onboarding profiles, and secret-free receipts",
+  "domain": "saas-commercial-lifecycle",
+  "owners": [
+    {
+      "kind": "repository",
+      "id": "github:wellmanifest/saas-lifecycle",
+      "responsibilities": [
+        "semantics",
+        "validation",
+        "compatibility"
+      ]
+    }
+  ],
+  "source": {
+    "repository": "https://github.com/wellmanifest/saas-lifecycle",
+    "path": "standard/saas-lifecycle.schema.json",
+    "declaredVersion": "1",
+    "canonical": "json-ast",
+    "mediaType": "application/schema+json",
+    "selectors": []
+  },
+  "ownedPaths": [
+    "dsl-manifest.json",
+    "standard/**",
+    "docs/**",
+    "scripts/**",
+    "README.md",
+    "AGENTS.md"
+  ],
+  "artifacts": [
+    {
+      "path": "standard/saas-lifecycle.schema.json",
+      "role": "normative-source",
+      "digest": "sha256:71971ee59af329ada5dd45b7f0044115f41493f767538e2f5dda4e32f5c2fd66"
+    },
+    {
+      "path": "standard/saas-lifecycle.v1.gbnf",
+      "role": "parser-contract",
+      "digest": "sha256:2565b1c0e93c1f5ee84c299428ef8592e295b4a3337585409ae1ee19644d7690"
+    },
+    {
+      "path": "standard/conformance.py",
+      "role": "parser-contract",
+      "digest": "sha256:9a7f711063b3591542bd4458313dc35bbc1c213abdfed08d49ad550095a06b53"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "role": "documentation",
+      "digest": "sha256:5860477fad2f3198dfc198639618f521dffde0bab261dfe8c909d19ea8552750"
+    },
+    {
+      "path": "docs/RUNTIME_MONITOR.md",
+      "role": "documentation",
+      "digest": "sha256:87a654a389021139e4be3d3069cda684cb7344021c4dc8d997d68c30b89f77f7"
+    }
+  ],
+  "namespaces": [
+    {
+      "prefix": "saas-lifecycle",
+      "uri": "https://github.com/wellmanifest/saas-lifecycle/"
+    }
+  ],
+  "projections": [],
+  "lifecycle": {
+    "compatibility": "semver",
+    "stability": "experimental",
+    "breaking": "major",
+    "additive": "minor",
+    "fix": "patch"
+  },
+  "semantics": {
+    "effectModel": "declarative-policy",
+    "unknownPolicy": "reject",
+    "authoritySchema": null
+  },
+  "llm": {
+    "mode": "none",
+    "requestSchemas": [],
+    "responseSchemas": [],
+    "naturalLanguage": "forbidden",
+    "sourceSchema": null,
+    "modelAuthority": "none",
+    "strict": true
+  },
+  "documentation": {
+    "vocabularyKind": "documents",
+    "commandRoot": "docs",
+    "errorRoot": "docs",
+    "criticalRoot": "docs",
+    "commands": [
+      "VALIDATE"
+    ],
+    "errorCodes": [
+      "SAAS-ONBOARD-001",
+      "SAAS-ONBOARD-002"
+    ],
+    "criticalCodes": []
+  },
+  "findingPolicy": {
+    "schema": "wellmanifest.dsl/findings/v1",
+    "requiredProducers": [
+      "wellmanifest.saas-lifecycle.conformance"
+    ],
+    "securityProducers": [],
+    "blockingSeverities": [
+      "critical"
+    ],
+    "requireEvaluable": true,
+    "blockUnresolvedSecurity": true
+  },
+  "publicationPolicy": {
+    "declaredTier": "review",
+    "deterministic": true,
+    "independentReview": true,
+    "externalAuthority": false,
+    "runtimeIsolation": false
+  },
+  "conformance": {
+    "levels": [
+      "manifest",
+      "schema"
+    ],
+    "commands": [
+      "python3 standard/conformance.py --all"
+    ],
+    "validExamples": [],
+    "invalidExamples": []
+  },
+  "mappings": [],
+  "adopt": [
+    "wellmanifest/new-project",
+    "wellmanifest/auth-lifecycle",
+    "wellmanifest/dsl"
+  ]
+}
