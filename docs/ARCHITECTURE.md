@@ -118,13 +118,48 @@ flowchart TB
     as active or available because an HTTP request succeeded.
 20. Every accepted or denied request emits a redacted hash-bound receipt.
 
+## Onboarding profiles (closed vocabulary)
+
+Commercial signup surfaces MUST declare exactly one onboarding profile. The
+profile selects *when* membership, payment method and trial interact; it does
+not replace the state graph above.
+
+Closed profile ids:
+
+| Profile id | Meaning | Membership before checkout | Card / payment method |
+| --- | --- | --- | --- |
+| `membership-before-payment` | Register → verify membership (OTP / access bind) → select plan → pay | Required | Required at checkout unless a separate promo decision (e.g. `NOCC100`) explicitly waives the card for that decision only |
+| `payment-at-trial` | Register → membership → start trial under offer trial policy → convert | Required before trial start | Per trial `requiresPaymentMethod` / conversion mode |
+| `nocc-promo` | Membership path with a promo overlay that may waive the card for an eligible Basic decision | Required | Waived only while promo eligibility remains true; otherwise fail closed to the base profile |
+
+Normative consequences:
+
+1. Under `membership-before-payment`, payment success MUST NOT create
+   membership, roles or an active tenant. Identity binding stays ahead of
+   checkout; billing verification still precedes provisioning.
+2. `payment-at-trial` remains the classic trial path: trial policy owns
+   conversion notice, payment-method presence and scheduled charge eligibility.
+3. `nocc-promo` is not a fourth lifecycle graph. It is a closed overlay on
+   either base profile and MUST reuse sales-policy eligibility (plan id + promo
+   code) rather than inventing portal-local free-account rules.
+4. Authentication mechanisms (OTP, magic link, password) are out of scope for
+   this pack. They MUST be bound through an identity/auth profile ADOPT
+   (future `wellmanifest/auth-lifecycle` or current Control access APIs). This
+   pack only requires the membership *signal* before the profile's payment
+   gate.
+5. Unknown profile ids fail closed. A portal that omits the profile while
+   claiming SaaS-lifecycle conformance fails closed.
+
+See `docs/LOGIC_FLOW.md` for the ordered sequences and fail-closed codes.
+
 ## Trust boundaries
 
 | Boundary | Owns | Must reject |
 | --- | --- | --- |
 | Offer registry | Plans, versioned price options, commercial shape, trial, locale defaults and entitlements | Unversioned/implicit price, duplicate interval, metric, conversion or add-on compatibility |
 | Metering authority | Metric semantics, observed use and deductions | Browser-declared usage or an unversioned unit |
-| Identity service | Membership and authenticated account | Email-only ownership inference |
+| Identity service | Membership and authenticated account | Email-only ownership inference; payment as membership |
+| Onboarding profile | Ordered membership ↔ payment ↔ trial gates | Unknown profile id; checkout before membership when profile forbids it |
 | Portal | Selection and user-visible state | Client-declared payment success |
 | Payment adapter | Provider API and signature verification | Unsigned event, mismatched plan/tenant/amount |
 | Event inbox | Idempotent event ledger | Duplicate processing or mutable event identity |
