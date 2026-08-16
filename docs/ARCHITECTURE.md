@@ -128,7 +128,7 @@ Closed profile ids:
 
 | Profile id | Meaning | Membership before checkout | Card / payment method |
 | --- | --- | --- | --- |
-| `membership-before-payment` | Register → verify membership (OTP / access bind) → select plan → pay | Required | Required at checkout unless a separate promo decision (e.g. `NOCC100`) explicitly waives the card for that decision only |
+| `membership-before-payment` | Register → verify membership (ADOPT AuthN profile) → select plan → pay | Required | Required at checkout unless a separate promo decision (e.g. `NOCC100`) explicitly waives the card for that decision only |
 | `payment-at-trial` | Register → membership → start trial under offer trial policy → convert | Required before trial start | Per trial `requiresPaymentMethod` / conversion mode |
 | `nocc-promo` | Membership path with a promo overlay that may waive the card for an eligible Basic decision | Required | Waived only while promo eligibility remains true; otherwise fail closed to the base profile |
 
@@ -142,11 +142,11 @@ Normative consequences:
 3. `nocc-promo` is not a fourth lifecycle graph. It is a closed overlay on
    either base profile and MUST reuse sales-policy eligibility (plan id + promo
    code) rather than inventing portal-local free-account rules.
-4. Authentication mechanisms (OTP, magic link, password) are out of scope for
-   this pack. They MUST be bound through an identity/auth profile ADOPT
-   (future `wellmanifest/auth-lifecycle` or current Control access APIs). This
-   pack only requires the membership *signal* before the profile's payment
-   gate.
+4. Authentication mechanisms (OTP, magic link, password) are **out of scope**
+   for this pack. ADOPT closed AuthN profile ids from
+   `wellmanifest/auth-lifecycle` (`otp-email`, `access-api`,
+   `session-continue`) and consume only the membership *signal* before the
+   profile's payment gate. Do not duplicate OTP procedures here.
 5. Unknown profile ids fail closed. A portal that omits the profile while
    claiming SaaS-lifecycle conformance fails closed.
 
