@@ -1,6 +1,6 @@
-# Runtime monitor (design stub)
+# Runtime monitor
 
-Status: design only. Not a live deployment twin and not an execution grant.
+Status: minimal live probe available. Not a deployment twin grant.
 
 ## Split of concerns
 
@@ -8,18 +8,30 @@ Status: design only. Not a live deployment twin and not an execution grant.
 | --- | --- | --- |
 | Local conformance | `wellmanifest/saas-lifecycle` | Fixture + digest checks (`standard/conformance.py`) |
 | Onboarding profile vocabulary | this pack | Closed ids and fail-closed codes |
-| Deployment twin / live probes | `subactor` platform / portal | Health, auth, payment-gate probes against a pinned ADOPT revision |
+| Deployment twin / live probes | `subactor/www-sub-actor` | `scripts/runtime_probe.py` against pinned ADOPT revision |
 
 ## First vertical: `membership-before-payment`
 
-Recommended continuous checks (portal + Control, fail closed):
+Run locally (portal on `:8781`, optional Control on `:8091`):
 
-1. `GET /readyz` (or equivalent) returns healthy without implying membership.
-2. Unauthenticated checkout / subscription create is denied (`SAAS-ONBOARD-001`).
-3. Membership/OTP bind succeeds before any payment adapter call is allowed.
-4. Client-declared payment success without server inspect stays non-active
+```bash
+# HOME probe (Subactor portal)
+python3 /home/tom/github/subactor/www-sub-actor/scripts/runtime_probe.py \
+  --www http://127.0.0.1:8781 --control http://127.0.0.1:8091
+
+# Pack wrapper (ADOPT path discovery)
+python3 scripts/runtime_probe.py --www http://127.0.0.1:8781 --control http://127.0.0.1:8091
+```
+
+Checks (fail closed):
+
+1. `GET /healthz` healthy without implying membership.
+2. Unauthenticated `/api/session` denied (`SAAS-ONBOARD-001`).
+3. Unknown-email OTP request denied; no session (`SAAS-ONBOARD-001`).
+4. Client-declared paid / forged login without membership does not activate
    (`SAAS-ONBOARD-002`).
-5. Offer pin + sales `compare-www-plans` stay green (commercial SSOT).
+5. Public offer (`/`) and `/legal` reachable; payment not publicly enabled by
+   default.
 
-Evidence belongs in Subactor TestQL / deployment-twin receipts. This pack keeps
-the normative codes and profile ids only.
+Evidence belongs in Subactor TestQL / probe JSON (`--json`). This pack keeps
+the normative codes and profile ids.
