@@ -30,6 +30,46 @@ account is not active until both billing and tenant provisioning are verified.
 one-time settlement it adds a usage grant while `currentPlanRef` remains the
 same.
 
+## Closed onboarding profiles
+
+An adopter MUST declare exactly one onboarding profile for a public signup
+surface. Profiles constrain when membership, payment method and trial may
+advance; they do not invent new lifecycle states.
+
+| Profile id | Order | Card / payment method | Typical product path |
+| --- | --- | --- | --- |
+| `membership-before-payment` | register → membership/OTP identity bind → plan select → checkout | Required at checkout (unless a separate promo profile allows bypass) | Subactor Cloud OTP sheet |
+| `payment-at-trial` | register → membership → trial with declared payment-method policy → conversion | Per trial policy (`requiresPaymentMethod`) | Classic trial-first SaaS |
+| `nocc-promo` | register → membership → Basic + eligible promo (e.g. `NOCC100`) → card bypass for that decision only | Deferred while promotion eligibility remains true | Promo overlay on either path above |
+
+Normative rules:
+
+1. **Membership before payment.** Under `membership-before-payment`, a portal
+   MUST NOT treat PayPal/Stripe success, a client callback or a remembered
+   cookie as membership. `REQUESTED → MEMBERSHIP_VERIFIED` remains owned by the
+   identity authority (OTP, access API or equivalent). Checkout may start only
+   after membership is verified for that account.
+2. **Payment does not grant roles.** Verified billing may enqueue provisioning;
+   it MUST NOT invent Founder/org roles or skip identity binding.
+3. **NOCC is a promo overlay, not a third lifecycle graph.** `nocc-promo`
+   changes card requirement for an eligible decision only. When eligibility is
+   absent or sanitized, the underlying profile (`membership-before-payment` or
+   `payment-at-trial`) remains in force.
+4. **AuthN vs AuthZ.** Membership / OTP authentication profiles belong in a
+   dedicated auth-lifecycle pack (or interim identity adapter). This standard
+   binds the membership *signal*; `wellmanifest/authority-lifecycle` binds
+   grants and leases; `wellmanifest/account-runtime` binds isolated tool
+   runtimes. Cross-refs MUST stay ADOPT pins, not duplicated HOME rules.
+
+Fail-closed outcomes for profile violations:
+
+| Violation | Outcome / state | Code hint |
+| --- | --- | --- |
+| Checkout before membership | `denied` | `SAAS-ONBOARD-001` |
+| Client-declared paid without membership | `billing_pending` then deny activation | `SAAS-ONBOARD-002` |
+| NOCC applied to ineligible plan | promo sanitized; card required | sales policy + `SAAS-ONBOARD-003` |
+| Unknown onboarding profile id | `denied` | `SAAS-ONBOARD-004` |
+
 ## Subscription confirmation
 
 ```mermaid
@@ -179,6 +219,9 @@ reference, not a raw exception containing secrets.
 
 | Failure | Required state/outcome | Safe next action |
 | --- | --- | --- |
+| Checkout before membership (`membership-before-payment`) | `denied` (`SAAS-ONBOARD-001`) | complete identity bind / OTP first |
+| Client-declared paid without membership | `billing_pending` then deny (`SAAS-ONBOARD-002`) | verify membership, then provider |
+| Unknown onboarding profile id | `denied` (`SAAS-ONBOARD-004`) | publish a closed profile id |
 | Missing trial conversion policy | `denied` | publish a new offer version |
 | UI says paid without server verification | `billing_pending` | query provider server-side |
 | Unsigned or invalid webhook | `denied` | reject and audit digest |
