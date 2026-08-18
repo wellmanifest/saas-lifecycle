@@ -14,7 +14,9 @@
       "responsibilities": [
         "semantics",
         "validation",
-        "compatibility"
+        "compatibility",
+        "runtime",
+        "security"
       ]
     }
   ],
@@ -53,12 +55,27 @@
     {
       "path": "docs/ARCHITECTURE.md",
       "role": "documentation",
-      "digest": "sha256:5860477fad2f3198dfc198639618f521dffde0bab261dfe8c909d19ea8552750"
+      "digest": "sha256:d9bef386756e8fbc53aa57f0003657d7a101f4eefe5121ce5fdb1c32f8a7335e"
     },
     {
       "path": "docs/RUNTIME_MONITOR.md",
       "role": "documentation",
       "digest": "sha256:87a654a389021139e4be3d3069cda684cb7344021c4dc8d997d68c30b89f77f7"
+    },
+    {
+      "path": "docs/VALIDATE.md",
+      "role": "documentation",
+      "digest": "sha256:309f40b20458113617a075376212e6fa97974abebc2c4b4a14327ee2a460c32a"
+    },
+    {
+      "path": "docs/ERROR/SAAS-ONBOARD-001.md",
+      "role": "documentation",
+      "digest": "sha256:b38a5c96688485dfbbe4cd7d2088ae95bf9cb0f0066f7b9d993294f79606968d"
+    },
+    {
+      "path": "docs/ERROR/SAAS-ONBOARD-002.md",
+      "role": "documentation",
+      "digest": "sha256:a82d20a2e2ebaef5c7ed8d8ae0b798dbe25aad3481daeabbbf454bf1110fde3f"
     }
   ],
   "namespaces": [
@@ -92,8 +109,8 @@
   "documentation": {
     "vocabularyKind": "documents",
     "commandRoot": "docs",
-    "errorRoot": "docs",
-    "criticalRoot": "docs",
+    "errorRoot": "docs/ERROR",
+    "criticalRoot": "docs/CRITICAL",
     "commands": [
       "VALIDATE"
     ],
@@ -108,7 +125,9 @@
     "requiredProducers": [
       "wellmanifest.saas-lifecycle.conformance"
     ],
-    "securityProducers": [],
+    "securityProducers": [
+      "wellmanifest.saas-lifecycle.conformance"
+    ],
     "blockingSeverities": [
       "critical"
     ],
@@ -125,7 +144,8 @@
   "conformance": {
     "levels": [
       "manifest",
-      "schema"
+      "contract",
+      "runtime"
     ],
     "commands": [
       "python3 standard/conformance.py --all"
@@ -133,10 +153,5 @@
     "validExamples": [],
     "invalidExamples": []
   },
-  "mappings": [],
-  "adopt": [
-    "wellmanifest/new-project",
-    "wellmanifest/auth-lifecycle",
-    "wellmanifest/dsl"
-  ]
+  "mappings": []
 }
