@@ -123,6 +123,45 @@ and cannot renew silently. Deduction order, aggregation and the semantic meaning
 of one unit belong to the referenced metering contract. The SaaS lifecycle owns
 only the commercial source, verified amount, remaining balance and validity.
 
+### Per-attempt usage settlement
+
+```mermaid
+sequenceDiagram
+    participant E as Entitlement ledger
+    participant A as Authority evaluator
+    participant U as URI Process executor
+    participant M as Metering authority
+    participant L as Append-only usage ledger
+    E->>L: reserve estimated normalized units
+    A-->>U: independent allow/deny + grant, optional lease/delegation evidence
+    U->>U: execute one attempt
+    U-->>M: outcome + bounded observation evidence
+    M->>L: settle actual units
+    M->>L: release unused reservation
+    L-->>E: deterministic balance projection
+```
+
+The reserve entry uses an estimate and `operationOutcome: pending`. A settle
+entry references the reservation, records actual measured and normalized units,
+and may carry a successful or failed outcome according to the versioned
+`meteringRuleRef`. Any unused reservation is released by a separate entry. A fully waived
+attempt records actual measurement with zero ledger units. A refund references
+the prior settled entry. Implementations MUST apply each immutable `entryRef`
+and idempotency key once and MUST reject a settlement, release or refund whose
+related entry is unresolved or belongs to a different account, grant, metric or
+attempt.
+
+Authority evidence is correlation, not charging authority. `authorityGrantRef`
+may be null for a denied operation; successful or failed execution requires the
+grant reference. `leaseRef` remains nullable because a concurrency-safe grant
+may explicitly require no lease. A delegation digest proves which child chain
+was evaluated, but it does not widen entitlement or package balance.
+
+The accounting projection SHOULD expose both raw attempt counts and normalized
+billable units grouped independently by organization, project, ticket, process
+run, URI Process, operation class, package and outcome. It MUST keep unknown
+project/ticket attribution in an explicit `null` bucket instead of guessing.
+
 Two tiers may share `capabilityParityGroup`. In that case they have exactly the
 same entitlements and differ only in commercial values such as price and
 included units. UI labels such as Basic or Pro never replace the stable plan

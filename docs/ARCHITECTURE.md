@@ -117,6 +117,23 @@ flowchart TB
     failed provisioning and rollback are honest states and cannot be rewritten
     as active or available because an HTTP request succeeded.
 20. Every accepted or denied request emits a redacted hash-bound receipt.
+21. Every commercial usage mutation MUST be an append-only
+    `wellmanifest.saas-usage-ledger-entry/v1`. It binds account, tenant,
+    organization, explicit nullable project and ticket attribution, principal,
+    process run, URI Process attempt, operation class, metric, metering rule,
+    package source and evidence. An implementation MUST NOT infer missing
+    project or ticket identity from a repository name, label or current UI
+    selection.
+22. Reservation, settlement, release, waiver and refund are distinct ledger
+    facts. Operation outcome is an independent dimension: failed or denied work
+    remains observable even when charging is waived or a reservation is
+    released. Idempotency is scoped to the immutable ledger entry; a projection
+    MUST reject replay and overdraw.
+23. Authentication identifies a principal; entitlement makes a commercial
+    package eligible; an authority grant permits an effect; delegation narrows
+    that authority; a lease coordinates concurrent use; a usage ledger entry
+    changes or explains a commercial balance; execution/read-back proves the
+    outcome. No layer implies another, and each has independent evidence.
 
 ## Onboarding profiles (closed vocabulary)
 
@@ -167,6 +184,8 @@ See `docs/LOGIC_FLOW.md` for the ordered sequences and fail-closed codes.
 | Deployment authority | Exact target plan and grant | Billing state as deployment authority |
 | Receipt store | Redacted outcome/evidence hashes | Provider payload, credentials, personal/payment data |
 | Usage-grant ledger | Verified allowance source, balance and validity | Client-issued credit, overdrawn or duplicate grant |
+| Usage settlement ledger | Append-only reserve/settle/release/waive/refund entries and projections | Guessed attribution, replay, authority budget used as package balance |
+| Authority evaluator | Independent effect decision, optional lease and delegation evidence | Entitlement or payment treated as mutation authority |
 | Product catalog | Product identity and stage | Prices, license text, deployment hosts |
 | Legal pack | Versioned policy, license and location | Commercial settlement or tenant activation |
 
@@ -194,3 +213,21 @@ provisioning → deployment resource`, with verified add-ons contributing
 separate usage grants beside, not in place of, the base plan. Billing providers,
 metering services and deployment engines are adapters, not owners of the
 lifecycle state machine.
+
+Commercial attribution adds an orthogonal execution hierarchy:
+
+```text
+account / tenant
+  -> organization
+     -> project (explicitly null when genuinely not applicable)
+        -> ticket (explicitly null when genuinely not applicable)
+           -> process run
+              -> URI Process attempt
+                 -> append-only usage ledger entries
+```
+
+The organization is mandatory for commercial usage. Project and ticket fields
+are mandatory but nullable so system-level work stays honest without blocking
+execution or inventing ownership. Product-specific metric and metering-rule
+authorities decide how observed work becomes normalized units; this standard
+only preserves their versioned references and calculation digest.

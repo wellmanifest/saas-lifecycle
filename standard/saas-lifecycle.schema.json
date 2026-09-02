@@ -7,7 +7,8 @@
     {"$ref": "#/$defs/offer"},
     {"$ref": "#/$defs/request"},
     {"$ref": "#/$defs/lifecycle"},
-    {"$ref": "#/$defs/receipt"}
+    {"$ref": "#/$defs/receipt"},
+    {"$ref": "#/$defs/usageLedgerEntry"}
   ],
   "$defs": {
     "identifier": {"type": "string", "minLength": 1, "maxLength": 96, "pattern": "^[a-z][a-z0-9._:-]*$"},
@@ -27,6 +28,18 @@
     "deploymentRef": {"type": "string", "pattern": "^deployment://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
     "entitlementRef": {"type": "string", "pattern": "^entitlement://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
     "metricRef": {"type": "string", "pattern": "^metric://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
+    "organizationRef": {"type": "string", "pattern": "^organization://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "projectRef": {"type": "string", "pattern": "^project://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "ticketRef": {"type": "string", "pattern": "^ticket://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "processRunRef": {"type": "string", "pattern": "^process-run://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "attemptRef": {"type": "string", "pattern": "^attempt://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "principalRef": {"type": "string", "pattern": "^authority://principal/[a-z0-9][a-z0-9._/-]*$", "maxLength": 320},
+    "uriProcessRef": {"type": "string", "pattern": "^[a-z][a-z0-9+.-]*://[^ ]+$", "maxLength": 640},
+    "operationClassRef": {"type": "string", "pattern": "^operation-class://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
+    "meteringRuleRef": {"type": "string", "pattern": "^metering-rule://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$", "maxLength": 320},
+    "usageEntryRef": {"type": "string", "pattern": "^usage://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$", "maxLength": 320},
+    "authorityGrantRef": {"type": "string", "pattern": "^authority://grant/[a-z0-9][a-z0-9._/-]*$", "maxLength": 320},
+    "leaseRef": {"type": "string", "pattern": "^authority://lease/[a-z0-9][a-z0-9._/-]*$", "maxLength": 320},
     "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
     "settlement": {
       "type": "object",
@@ -338,6 +351,79 @@
         {"if": {"properties": {"state": {"enum": ["trial_active", "trial_expiring"]}}, "required": ["state"]}, "then": {"required": ["trial"]}},
         {"if": {"properties": {"state": {"enum": ["paid_pending_provisioning", "active", "plan_change_pending", "suspended"]}}, "required": ["state"]}, "then": {"required": ["subscription"]}},
         {"if": {"properties": {"state": {"enum": ["paid_pending_provisioning", "active", "plan_change_pending"]}}, "required": ["state"]}, "then": {"required": ["provisioning"]}}
+      ]
+    },
+    "usageAttribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationRef", "projectRef", "ticketRef", "principalRef", "processRunRef", "attemptRef", "uriProcessRef", "operationClassRef"],
+      "properties": {
+        "organizationRef": {"$ref": "#/$defs/organizationRef"},
+        "projectRef": {"oneOf": [{"$ref": "#/$defs/projectRef"}, {"type": "null"}]},
+        "ticketRef": {"oneOf": [{"$ref": "#/$defs/ticketRef"}, {"type": "null"}]},
+        "principalRef": {"$ref": "#/$defs/principalRef"},
+        "processRunRef": {"$ref": "#/$defs/processRunRef"},
+        "attemptRef": {"$ref": "#/$defs/attemptRef"},
+        "uriProcessRef": {"$ref": "#/$defs/uriProcessRef"},
+        "operationClassRef": {"$ref": "#/$defs/operationClassRef"}
+      }
+    },
+    "usageAuthorityEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decisionRef", "authorityGrantRef", "leaseRef", "delegationDigest"],
+      "properties": {
+        "decisionRef": {"$ref": "#/$defs/evidenceRef"},
+        "authorityGrantRef": {"oneOf": [{"$ref": "#/$defs/authorityGrantRef"}, {"type": "null"}]},
+        "leaseRef": {"oneOf": [{"$ref": "#/$defs/leaseRef"}, {"type": "null"}]},
+        "delegationDigest": {"oneOf": [{"$ref": "#/$defs/sha256Ref"}, {"type": "null"}]}
+      }
+    },
+    "usageMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "observedUnits", "billableUnits", "calculationDigest"],
+      "properties": {
+        "kind": {"enum": ["estimate", "actual", "not-applicable"]},
+        "observedUnits": {"type": "integer", "minimum": 0, "maximum": 1000000000000},
+        "billableUnits": {"type": "integer", "minimum": 0, "maximum": 1000000000000},
+        "calculationDigest": {"$ref": "#/$defs/sha256Ref"}
+      }
+    },
+    "usageLedgerEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$schema", "schema", "entryRef", "idempotencyKey", "kind", "accountRef", "tenantRef", "sourcePlanRef", "priceRef", "usageGrantRef", "metricRef", "meteringRuleRef", "attribution", "authority", "measurement", "ledgerUnits", "operationOutcome", "recordedAt", "evidenceRefs", "secretsRedacted", "paymentDataStored"],
+      "properties": {
+        "$schema": {"const": "https://wellmanifest.dev/schemas/saas-lifecycle/v1"},
+        "schema": {"const": "wellmanifest.saas-usage-ledger-entry/v1"},
+        "entryRef": {"$ref": "#/$defs/usageEntryRef"},
+        "relatedEntryRef": {"$ref": "#/$defs/usageEntryRef"},
+        "idempotencyKey": {"$ref": "#/$defs/identifier"},
+        "kind": {"enum": ["reserve", "settle", "release", "waive", "refund"]},
+        "accountRef": {"$ref": "#/$defs/accountRef"},
+        "tenantRef": {"$ref": "#/$defs/tenantRef"},
+        "sourcePlanRef": {"$ref": "#/$defs/planRef"},
+        "priceRef": {"$ref": "#/$defs/priceRef"},
+        "usageGrantRef": {"$ref": "#/$defs/grantRef"},
+        "metricRef": {"$ref": "#/$defs/metricRef"},
+        "meteringRuleRef": {"$ref": "#/$defs/meteringRuleRef"},
+        "attribution": {"$ref": "#/$defs/usageAttribution"},
+        "authority": {"$ref": "#/$defs/usageAuthorityEvidence"},
+        "measurement": {"$ref": "#/$defs/usageMeasurement"},
+        "ledgerUnits": {"type": "integer", "minimum": 0, "maximum": 1000000000000},
+        "operationOutcome": {"enum": ["pending", "succeeded", "failed", "denied", "cancelled"]},
+        "recordedAt": {"type": "string", "format": "date-time"},
+        "evidenceRefs": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/evidenceRef"}},
+        "secretsRedacted": {"const": true},
+        "paymentDataStored": {"const": false}
+      },
+      "allOf": [
+        {"if": {"properties": {"kind": {"const": "reserve"}}, "required": ["kind"]}, "then": {"properties": {"measurement": {"properties": {"kind": {"const": "estimate"}}}, "ledgerUnits": {"minimum": 1}, "operationOutcome": {"const": "pending"}}, "not": {"required": ["relatedEntryRef"]}}},
+        {"if": {"properties": {"kind": {"enum": ["settle", "waive"]}}, "required": ["kind"]}, "then": {"properties": {"measurement": {"properties": {"kind": {"const": "actual"}}}, "operationOutcome": {"enum": ["succeeded", "failed", "denied", "cancelled"]}}}},
+        {"if": {"properties": {"kind": {"enum": ["release", "refund"]}}, "required": ["kind"]}, "then": {"properties": {"measurement": {"properties": {"kind": {"const": "not-applicable"}, "observedUnits": {"const": 0}, "billableUnits": {"const": 0}}}, "ledgerUnits": {"minimum": 1}, "operationOutcome": {"enum": ["succeeded", "failed", "denied", "cancelled"]}}, "required": ["relatedEntryRef"]}},
+        {"if": {"properties": {"kind": {"const": "settle"}}, "required": ["kind"]}, "then": {"properties": {"ledgerUnits": {"minimum": 1}}, "required": ["relatedEntryRef"]}},
+        {"if": {"properties": {"kind": {"const": "waive"}}, "required": ["kind"]}, "then": {"properties": {"ledgerUnits": {"const": 0}}}}
       ]
     },
     "receipt": {
