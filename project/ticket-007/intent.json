@@ -1,0 +1,41 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-007",
+  "summary": "Assign the DSL manifest to the integration workstream",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": ["project/ticket-007/**", "TODO.md", "project/TICKETS.md", ".governance/manifest.json"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9059d4d3e7e386803e280034216b077faa81d763",
+    "targetBranch": "main",
+    "outcome": "The target governance assigns the DSL artifact manifest to the integration workstream so standard sources and their declared hashes can change atomically.",
+    "nonGoals": ["Change the SaaS schema or artifact hashes", "Upgrade the pinned new-project package"],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {"maxImplementationFiles": 1, "maxAffectedComponents": 1, "maxPublicInterfaceChanges": 0, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the target manifest's supported extension surface to assign dsl-manifest.json to integration without modifying managed standard-owned governance files.",
+      "components": [{"name": "target-workstream-policy", "paths": [".governance/manifest.json"]}],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert ticket-007; this restores the detected unowned-path defect."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["./project/governance-check.sh --actor agent"], "evidence": "project/ticket-007/ai-codex-logs.txt"},
+      {"criterion": "AC-02", "commands": ["./project/governance-check.sh --actor agent"], "evidence": "project/ticket-007/ai-codex-logs.txt"}
+    ]
+  }
+}
