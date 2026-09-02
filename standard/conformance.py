@@ -455,6 +455,52 @@ def validate_usage_entry(c:Contracts,value:Any)->None:
     if value["secretsRedacted"] is not True or value["paymentDataStored"] is not False: raise ContractError("unsafe usage entry")
 
 
+def project_usage_ledger(c:Contracts,entries:list[dict[str,Any]],initial_units:int)->dict[str,int]:
+    if type(initial_units) is not int or initial_units<0: raise ContractError("invalid initial usage balance")
+    available=initial_units; consumed=0; reserved:dict[str,int]={}; settled:dict[str,int]={}; by_ref:dict[str,dict[str,Any]]={}; keys:set[str]=set()
+    for entry in entries:
+        validate_usage_entry(c,entry)
+        ref,key,kind=entry["entryRef"],entry["idempotencyKey"],entry["kind"]
+        if ref in by_ref or key in keys: raise ContractError("usage ledger replay")
+        related=by_ref.get(entry.get("relatedEntryRef"))
+        if entry.get("relatedEntryRef") is not None and related is None: raise ContractError("unresolved usage relation")
+        if related is not None:
+            for field in ("accountRef","tenantRef","usageGrantRef","metricRef","meteringRuleRef"):
+                if entry[field]!=related[field]: raise ContractError("cross-boundary usage relation")
+            for field in ("organizationRef","projectRef","ticketRef","processRunRef","attemptRef","uriProcessRef"):
+                if entry["attribution"][field]!=related["attribution"][field]: raise ContractError("cross-attribution usage relation")
+        units=entry["ledgerUnits"]
+        if kind=="reserve":
+            if units>available: raise ContractError("usage allowance overdraw")
+            available-=units; reserved[ref]=units
+        elif kind=="settle":
+            source=entry["relatedEntryRef"]
+            if related["kind"]!="reserve" or units>reserved.get(source,0): raise ContractError("settlement exceeds reservation")
+            reserved[source]-=units; consumed+=units; settled[ref]=units
+        elif kind=="release":
+            source=entry["relatedEntryRef"]
+            if related["kind"]!="reserve" or units>reserved.get(source,0): raise ContractError("release exceeds reservation")
+            reserved[source]-=units; available+=units
+        elif kind=="refund":
+            source=entry["relatedEntryRef"]
+            if related["kind"]!="settle" or units>settled.get(source,0): raise ContractError("refund exceeds settlement")
+            settled[source]-=units; consumed-=units; available+=units
+        by_ref[ref]=entry; keys.add(key)
+    return {"initialUnits":initial_units,"availableUnits":available,"reservedUnits":sum(reserved.values()),"consumedUnits":consumed,"entryCount":len(by_ref)}
+
+
+def usage_ledger_example()->list[dict[str,Any]]:
+    reserve=usage_entry_example(); reserve["measurement"]["observedUnits"]=3; reserve["measurement"]["billableUnits"]=3; reserve["ledgerUnits"]=3
+    def derived(kind:str,units:int,related:str)->dict[str,Any]:
+        value=copy.deepcopy(reserve); value["kind"]=kind; value["entryRef"]=f"usage://example.test/entries/attempt-001/{kind}"; value["idempotencyKey"]=f"attempt-001-{kind}"; value["relatedEntryRef"]=related; value["operationOutcome"]="succeeded"; value["ledgerUnits"]=units
+        if kind=="settle": value["measurement"].update({"kind":"actual","observedUnits":2,"billableUnits":2})
+        else: value["measurement"].update({"kind":"not-applicable","observedUnits":0,"billableUnits":0})
+        return value
+    settle=derived("settle",2,reserve["entryRef"]); release=derived("release",1,reserve["entryRef"]); refund=derived("refund",1,settle["entryRef"])
+    waive=copy.deepcopy(reserve); waive["entryRef"]="usage://example.test/entries/attempt-002/waive"; waive["idempotencyKey"]="attempt-002-waive"; waive["kind"]="waive"; waive["attribution"]["attemptRef"]="attempt://example.test/run-001/step-02"; waive["measurement"].update({"kind":"actual","observedUnits":1,"billableUnits":1}); waive["ledgerUnits"]=0; waive["operationOutcome"]="denied"
+    return [reserve,settle,release,refund,waive]
+
+
 def uri(value:Any)->str:
     if not isinstance(value,str) or len(value)>512 or re.fullmatch(r"[a-z][a-z0-9+.-]*://\S+",value) is None: raise ContractError("invalid URI reference")
     return value
@@ -591,6 +637,8 @@ def run_all()->dict[str,Any]:
     c=Contracts(); c.integrity(); offer,request,state,receipt,usage=offer_example(),request_example(),lifecycle_example(),receipt_example(),usage_entry_example()
     validate_lifecycle_profile(c.schema)
     validate_offer(c,offer); validate_request(c,request); validate_lifecycle(c,state); validate_receipt(c,receipt); validate_usage_entry(c,usage)
+    ledger=usage_ledger_example(); projection=project_usage_ledger(c,ledger,10)
+    if projection!={"initialUnits":10,"availableUnits":9,"reservedUnits":0,"consumedUnits":1,"entryCount":5}: raise AssertionError("usage projection mismatch")
     profiles=validate_profile_examples(c); paypal,stripe,deployment=profiles
     cases=[]
     def add(name:str,validator:Any,value:Any)->None:
@@ -652,7 +700,16 @@ def run_all()->dict[str,Any]:
         try: case()
         except (ContractError,KeyError,TypeError): rejected.append(name)
         else: raise AssertionError(f"adversarial case accepted: {name}")
-    return {"schema":"wellmanifest.saas-lifecycle-conformance/v1","ok":True,"schemaDigest":"sha256:"+SCHEMA_DIGEST,"grammarDigest":"sha256:"+GRAMMAR_DIGEST,"profileSchemaDigest":"sha256:"+PROFILE_SCHEMA_DIGEST,"profileExamplesDigest":"sha256:"+PROFILE_EXAMPLES_DIGEST,"positiveVariants":5,"adapterProfileVariants":len(profiles),"adversarialRejected":rejected}
+    ledger_cases=[]
+    def reject_ledger(name:str,entries:list[dict[str,Any]],initial:int=10)->None:
+        try: project_usage_ledger(c,entries,initial)
+        except (ContractError,KeyError,TypeError): ledger_cases.append(name)
+        else: raise AssertionError(f"adversarial ledger accepted: {name}")
+    bad=copy.deepcopy(ledger); bad.append(copy.deepcopy(bad[0])); reject_ledger("usage-ledger-replay",bad)
+    bad=copy.deepcopy(ledger); bad[0]["ledgerUnits"]=11; bad[0]["measurement"]["billableUnits"]=11; reject_ledger("usage-ledger-overdraw",bad)
+    bad=copy.deepcopy(ledger); bad[1]["attribution"]["projectRef"]="project://example.test/other"; reject_ledger("usage-ledger-cross-attribution",bad)
+    rejected.extend(ledger_cases)
+    return {"schema":"wellmanifest.saas-lifecycle-conformance/v1","ok":True,"schemaDigest":"sha256:"+SCHEMA_DIGEST,"grammarDigest":"sha256:"+GRAMMAR_DIGEST,"profileSchemaDigest":"sha256:"+PROFILE_SCHEMA_DIGEST,"profileExamplesDigest":"sha256:"+PROFILE_EXAMPLES_DIGEST,"positiveVariants":5,"usageLedgerEntries":projection["entryCount"],"adapterProfileVariants":len(profiles),"adversarialRejected":rejected}
 
 
 def main()->int:

@@ -50,7 +50,7 @@
     {
       "path": "standard/conformance.py",
       "role": "parser-contract",
-      "digest": "sha256:504aba43374ce701684ea639eb85fe5b5e0c042a7dcc0735d1b2c796e50b7847"
+      "digest": "sha256:600d3810ccabf2718a346f6fbda287e9bf3447a9fb839b599f23345a0746747f"
     },
     {
       "path": "docs/ARCHITECTURE.md",

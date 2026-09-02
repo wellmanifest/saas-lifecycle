@@ -26,8 +26,9 @@ authority and POA receipts cannot safely substitute for that commercial fact.
 - Added the closed `wellmanifest.saas-usage-ledger-entry/v1` document with
   commercial identity, explicit organization/project/ticket attribution,
   process/attempt/URI identity, metering rule and independent authority facts.
-- Added reserve, settle, release, waive and refund invariants plus seven new
-  adversarial cases.
+- Added reserve, settle, release, waive and refund invariants, a deterministic
+  balance projector and ten new adversarial cases including replay, overdraw
+  and cross-attribution rejection.
 - Registered updated schema, validator and documentation hashes atomically in
   the DSL manifest after ticket-007 repaired its workstream ownership.
 - Verified all five entry kinds with Draft 2020-12 JSON Schema and semantic
