@@ -1,0 +1,64 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-006",
+  "summary": "Standardize attributable usage settlement receipts",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-006/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "standard/saas-lifecycle.schema.json",
+    "standard/conformance.py",
+    "docs/ARCHITECTURE.md",
+    "docs/LOGIC_FLOW.md",
+    "dsl-manifest.json"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2599053c4e6cf1c9c133d7928e238aa4550be11c",
+    "targetBranch": "main",
+    "outcome": "The experimental SaaS lifecycle standard defines append-only attributable usage ledger entries and keeps commercial settlement independent from authentication, authority, leases, delegation and execution receipts.",
+    "nonGoals": [
+      "Define Subactor plan prices or the meaning of a product-specific metric",
+      "Implement a product runtime, database or dashboard",
+      "Treat a lease, delegation or authority budget as a paid allowance"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend the existing experimental closed document family with an append-only ledger entry. Keep metric semantics external and require explicit nullable project/ticket attribution rather than guessing it from repository names or labels.",
+      "components": [
+        {"name": "usage-settlement-contract", "paths": ["standard/saas-lifecycle.schema.json", "standard/conformance.py", "dsl-manifest.json"]},
+        {"name": "usage-settlement-guidance", "paths": ["docs/ARCHITECTURE.md", "docs/LOGIC_FLOW.md"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": ["Add wellmanifest.saas-usage-ledger-entry/v1 as an append-only usage ledger projection source"],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert ticket-006; the original four document variants remain unchanged."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["python3 standard/conformance.py --all"], "evidence": "project/ticket-006/ai-codex-logs.txt"},
+      {"criterion": "AC-02", "commands": ["python3 standard/conformance.py --all"], "evidence": "project/ticket-006/ai-codex-logs.txt"},
+      {"criterion": "AC-03", "commands": ["python3 standard/conformance.py --all"], "evidence": "project/ticket-006/ai-codex-logs.txt"},
+      {"criterion": "AC-04", "commands": ["docker compose run --rm --build conformance", "./project/governance-check.sh --actor agent", "git diff --check"], "evidence": "project/ticket-006/ai-codex-logs.txt"}
+    ]
+  }
+}

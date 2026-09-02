@@ -40,7 +40,7 @@
     {
       "path": "standard/saas-lifecycle.schema.json",
       "role": "normative-source",
-      "digest": "sha256:71971ee59af329ada5dd45b7f0044115f41493f767538e2f5dda4e32f5c2fd66"
+      "digest": "sha256:2d4bba0039fcfb0bd8ae366e3ef949f50b9720db80b900434277b5a75b4ef6c9"
     },
     {
       "path": "standard/saas-lifecycle.v1.gbnf",
@@ -50,12 +50,17 @@
     {
       "path": "standard/conformance.py",
       "role": "parser-contract",
-      "digest": "sha256:9a7f711063b3591542bd4458313dc35bbc1c213abdfed08d49ad550095a06b53"
+      "digest": "sha256:504aba43374ce701684ea639eb85fe5b5e0c042a7dcc0735d1b2c796e50b7847"
     },
     {
       "path": "docs/ARCHITECTURE.md",
       "role": "documentation",
-      "digest": "sha256:d9bef386756e8fbc53aa57f0003657d7a101f4eefe5121ce5fdb1c32f8a7335e"
+      "digest": "sha256:a365c2282f85ed9b06101fe18b8dc256b81b5421c60aee3bc1ec8cfc6c5f83e3"
+    },
+    {
+      "path": "docs/LOGIC_FLOW.md",
+      "role": "documentation",
+      "digest": "sha256:2b70e0ad5678c1d7e0808584ab497e24233f3daf01a7359a326fe3d606b6eaa8"
     },
     {
       "path": "docs/RUNTIME_MONITOR.md",

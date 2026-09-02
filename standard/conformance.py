@@ -22,7 +22,7 @@ PROFILE_SCHEMA_PATH = ROOT / "saas-adapter-profile.schema.json"
 PROFILE_EXAMPLES_PATH = ROOT / "adapter-profiles.examples.json"
 LIFECYCLE_PATH = ROOT / "saas-lifecycle.lifecycle"
 LIFECYCLE_VALIDATOR_PATH = ROOT / "lifecycle.py"
-SCHEMA_DIGEST = "659e2d0124b236e86f76786c37bc22bbd326f274eb6b9ca9c3a20d82e33f26cd"
+SCHEMA_DIGEST = "f53aef1a48c3f8e20190a49e1b16438cafdb602b2744684d249d71798802a7b2"
 GRAMMAR_DIGEST = "2565b1c0e93c1f5ee84c299428ef8592e295b4a3337585409ae1ee19644d7690"
 PROFILE_SCHEMA_DIGEST = "060495e3dda6a80bc67d861d55422dff65df912028b0d3a7a598959de3df7054"
 PROFILE_EXAMPLES_DIGEST = "5ed1f16934de26008feafdcdd98577298db2474c8ddf8b5aa0128aadfb52fc49"
@@ -129,7 +129,7 @@ class Contracts:
         self.schema=json.loads(SCHEMA_PATH.read_text("utf-8")); self.grammar=GRAMMAR_PATH.read_text("utf-8")
         self.profile_schema=json.loads(PROFILE_SCHEMA_PATH.read_text("utf-8")); self.profile_examples=json.loads(PROFILE_EXAMPLES_PATH.read_text("utf-8"))
         defs=self.schema.get("$defs", {})
-        names=("identifier","sha256","sha256Ref","accountRef","tenantRef","planRef","priceRef","providerRef","billingRef","intentRef","grantRef","eventRef","evidenceRef","outboxRef","deploymentRef","entitlementRef","metricRef","currency")
+        names=("identifier","sha256","sha256Ref","accountRef","tenantRef","planRef","priceRef","providerRef","billingRef","intentRef","grantRef","eventRef","evidenceRef","outboxRef","deploymentRef","entitlementRef","metricRef","organizationRef","projectRef","ticketRef","processRunRef","attemptRef","principalRef","uriProcessRef","operationClassRef","meteringRuleRef","usageEntryRef","authorityGrantRef","leaseRef","currency")
         self.patterns={name:re.compile(defs[name]["pattern"]) for name in names}
 
     def ref(self,name:str,value:Any)->str:
@@ -141,7 +141,7 @@ class Contracts:
         if digest(canonical(self.schema))!=SCHEMA_DIGEST or digest(self.grammar)!=GRAMMAR_DIGEST: raise ContractError("contract digest mismatch")
         if self.profile_schema.get("$schema")!="https://json-schema.org/draft/2020-12/schema" or self.profile_schema.get("$id")!=PROFILE_SCHEMA_URI: raise ContractError("profile schema identity mismatch")
         if digest(canonical(self.profile_schema))!=PROFILE_SCHEMA_DIGEST or digest(canonical(self.profile_examples))!=PROFILE_EXAMPLES_DIGEST: raise ContractError("profile contract digest mismatch")
-        if {x.get("$ref") for x in self.schema.get("oneOf",[])}!={"#/$defs/offer","#/$defs/request","#/$defs/lifecycle","#/$defs/receipt"}: raise ContractError("document variants incomplete")
+        if {x.get("$ref") for x in self.schema.get("oneOf",[])}!={"#/$defs/offer","#/$defs/request","#/$defs/lifecycle","#/$defs/receipt","#/$defs/usageLedgerEntry"}: raise ContractError("document variants incomplete")
         if {x.get("$ref") for x in self.profile_schema.get("oneOf",[])}!={"#/$defs/paymentProfile","#/$defs/deploymentProfile"}: raise ContractError("profile variants incomplete")
         if self.profile_examples.get("schema")!="wellmanifest.saas-adapter-profile-examples/v1": raise ContractError("profile examples identity mismatch")
         for fragment in ("root ::= request","payment status","purchase_addon","plan-ref ::=","price-ref ::=","billing-ref ::=","sha256 ::="):
@@ -194,6 +194,46 @@ def lifecycle_example()->dict[str,Any]:
 
 def receipt_example()->dict[str,Any]:
     return {"$schema":SCHEMA_URI,"schema":"wellmanifest.saas-lifecycle-receipt/v1","requestId":"request-001","accountRef":"account://example.test/account-001","tenantRef":"tenant://example.test/acme","planRef":"plan://example.test/prepaid-actions/v1","priceRef":"price://example.test/prepaid-actions/once/v1","inputHash":"c"*64,"planHash":"a"*64,"outcome":"addon_activated","startedAt":"2026-08-12T11:50:00Z","completedAt":"2026-08-12T12:00:00Z","evidenceRefs":["evidence://example.test/saas/addon-001/r1"],"secretsRedacted":True,"paymentDataStored":False}
+
+
+def usage_entry_example()->dict[str,Any]:
+    return {
+        "$schema":SCHEMA_URI,
+        "schema":"wellmanifest.saas-usage-ledger-entry/v1",
+        "entryRef":"usage://example.test/entries/attempt-001/reserve",
+        "idempotencyKey":"attempt-001-reserve",
+        "kind":"reserve",
+        "accountRef":"account://example.test/account-001",
+        "tenantRef":"tenant://example.test/acme",
+        "sourcePlanRef":"plan://example.test/basic/v1",
+        "priceRef":"price://example.test/basic/month/v1",
+        "usageGrantRef":"grant://example.test/usage/basic-2026-08",
+        "metricRef":"metric://example.test/uri-operations/v1",
+        "meteringRuleRef":"metering-rule://example.test/subactor-cloud/v1",
+        "attribution":{
+            "organizationRef":"organization://example.test/acme",
+            "projectRef":"project://example.test/customer-portal",
+            "ticketRef":"ticket://example.test/PLF-123",
+            "principalRef":"authority://principal/subactor-coding-agent",
+            "processRunRef":"process-run://example.test/run-001",
+            "attemptRef":"attempt://example.test/run-001/step-01",
+            "uriProcessRef":"deployment://example.test/site/command/publish",
+            "operationClassRef":"operation-class://example.test/uri-process/write/v1",
+        },
+        "authority":{
+            "decisionRef":"evidence://example.test/authority/decision-001/r1",
+            "authorityGrantRef":"authority://grant/subactor/deploy-001",
+            "leaseRef":None,
+            "delegationDigest":None,
+        },
+        "measurement":{"kind":"estimate","observedUnits":1,"billableUnits":1,"calculationDigest":"sha256:"+"d"*64},
+        "ledgerUnits":1,
+        "operationOutcome":"pending",
+        "recordedAt":"2026-08-12T12:01:00Z",
+        "evidenceRefs":["evidence://example.test/usage/attempt-001/r1"],
+        "secretsRedacted":True,
+        "paymentDataStored":False,
+    }
 
 
 def settlement(c:Contracts,value:Any)->tuple[str,str,str]:
@@ -363,6 +403,58 @@ def validate_receipt(c:Contracts,value:Any)->None:
     if value["secretsRedacted"] is not True or value["paymentDataStored"] is not False: raise ContractError("unsafe receipt")
 
 
+def validate_usage_entry(c:Contracts,value:Any)->None:
+    reject_sensitive(value)
+    required={"$schema","schema","entryRef","idempotencyKey","kind","accountRef","tenantRef","sourcePlanRef","priceRef","usageGrantRef","metricRef","meteringRuleRef","attribution","authority","measurement","ledgerUnits","operationOutcome","recordedAt","evidenceRefs","secretsRedacted","paymentDataStored"}
+    value=exact(value,required,{"relatedEntryRef"})
+    if value["$schema"]!=SCHEMA_URI or value["schema"]!="wellmanifest.saas-usage-ledger-entry/v1": raise ContractError("unsupported usage entry")
+    for name,field in (("usageEntryRef","entryRef"),("identifier","idempotencyKey"),("accountRef","accountRef"),("tenantRef","tenantRef"),("planRef","sourcePlanRef"),("priceRef","priceRef"),("grantRef","usageGrantRef"),("metricRef","metricRef"),("meteringRuleRef","meteringRuleRef")):
+        c.ref(name,value[field])
+    kind=value["kind"]
+    if kind not in {"reserve","settle","release","waive","refund"}: raise ContractError("unsupported usage entry kind")
+    if "relatedEntryRef" in value:
+        c.ref("usageEntryRef",value["relatedEntryRef"])
+        if value["relatedEntryRef"]==value["entryRef"]: raise ContractError("usage entry cannot relate to itself")
+    if kind in {"settle","release","refund"} and "relatedEntryRef" not in value: raise ContractError("usage entry lacks prior entry binding")
+    if kind=="reserve" and "relatedEntryRef" in value: raise ContractError("reservation cannot have a prior entry")
+
+    attribution=exact(value["attribution"],{"organizationRef","projectRef","ticketRef","principalRef","processRunRef","attemptRef","uriProcessRef","operationClassRef"})
+    c.ref("organizationRef",attribution["organizationRef"])
+    for name in ("projectRef","ticketRef"):
+        if attribution[name] is not None: c.ref(name,attribution[name])
+    for name in ("principalRef","processRunRef","attemptRef","uriProcessRef","operationClassRef"):
+        c.ref(name,attribution[name])
+
+    authority=exact(value["authority"],{"decisionRef","authorityGrantRef","leaseRef","delegationDigest"})
+    c.ref("evidenceRef",authority["decisionRef"])
+    for name in ("authorityGrantRef","leaseRef","sha256Ref"):
+        field="delegationDigest" if name=="sha256Ref" else name
+        if authority[field] is not None: c.ref(name,authority[field])
+
+    measurement=exact(value["measurement"],{"kind","observedUnits","billableUnits","calculationDigest"})
+    if measurement["kind"] not in {"estimate","actual","not-applicable"}: raise ContractError("unsupported measurement kind")
+    if any(type(measurement[name]) is not int or not 0<=measurement[name]<=1000000000000 for name in ("observedUnits","billableUnits")): raise ContractError("invalid measured units")
+    c.ref("sha256Ref",measurement["calculationDigest"])
+    units=value["ledgerUnits"]
+    if type(units) is not int or not 0<=units<=1000000000000: raise ContractError("invalid ledger units")
+    outcome=value["operationOutcome"]
+    if kind=="reserve":
+        if measurement["kind"]!="estimate" or units<1 or units!=measurement["billableUnits"] or outcome!="pending": raise ContractError("invalid reservation")
+    elif kind=="settle":
+        if measurement["kind"]!="actual" or units<1 or units!=measurement["billableUnits"] or outcome=="pending": raise ContractError("invalid settlement")
+    elif kind=="waive":
+        if measurement["kind"]!="actual" or units!=0 or outcome=="pending": raise ContractError("invalid waiver")
+    else:
+        if measurement["kind"]!="not-applicable" or measurement["observedUnits"]!=0 or measurement["billableUnits"]!=0 or units<1 or outcome=="pending": raise ContractError("invalid release or refund")
+    if outcome not in {"pending","succeeded","failed","denied","cancelled"}: raise ContractError("unsupported operation outcome")
+    if outcome in {"succeeded","failed"} and authority["authorityGrantRef"] is None: raise ContractError("execution outcome lacks authority grant")
+    time_value(value["recordedAt"])
+    evidence=value["evidenceRefs"]
+    if not isinstance(evidence,list) or not evidence or len(evidence)!=len(set(evidence)): raise ContractError("invalid usage evidence")
+    for reference in evidence: c.ref("evidenceRef",reference)
+    if value["secretsRedacted"] is not True or value["paymentDataStored"] is not False: raise ContractError("unsafe usage entry")
+
+
 def uri(value:Any)->str:
     if not isinstance(value,str) or len(value)>512 or re.fullmatch(r"[a-z][a-z0-9+.-]*://\S+",value) is None: raise ContractError("invalid URI reference")
     return value
@@ -496,9 +588,9 @@ def validate_profile_examples(c:Contracts)->list[dict[str,Any]]:
 
 
 def run_all()->dict[str,Any]:
-    c=Contracts(); c.integrity(); offer,request,state,receipt=offer_example(),request_example(),lifecycle_example(),receipt_example()
+    c=Contracts(); c.integrity(); offer,request,state,receipt,usage=offer_example(),request_example(),lifecycle_example(),receipt_example(),usage_entry_example()
     validate_lifecycle_profile(c.schema)
-    validate_offer(c,offer); validate_request(c,request); validate_lifecycle(c,state); validate_receipt(c,receipt)
+    validate_offer(c,offer); validate_request(c,request); validate_lifecycle(c,state); validate_receipt(c,receipt); validate_usage_entry(c,usage)
     profiles=validate_profile_examples(c); paypal,stripe,deployment=profiles
     cases=[]
     def add(name:str,validator:Any,value:Any)->None:
@@ -535,6 +627,13 @@ def run_all()->dict[str,Any]:
     bad=copy.deepcopy(state); bad["usageGrants"].append(copy.deepcopy(bad["usageGrants"][0])); add("duplicate-usage-grant",validate_lifecycle,bad)
     bad=copy.deepcopy(receipt); bad["providerPayload"]={"status":"ACTIVE"}; add("provider-payload-receipt",validate_receipt,bad)
     bad=copy.deepcopy(receipt); bad["paymentDataStored"]=True; add("payment-data-receipt",validate_receipt,bad)
+    bad=copy.deepcopy(usage); bad["attribution"].pop("organizationRef"); add("usage-without-organization",validate_usage_entry,bad)
+    bad=copy.deepcopy(usage); bad["projectRef"]="project://example.test/guessed"; add("usage-implicit-attribution",validate_usage_entry,bad)
+    bad=copy.deepcopy(usage); bad["ledgerUnits"]=2; add("reservation-unit-mismatch",validate_usage_entry,bad)
+    bad=copy.deepcopy(usage); bad["kind"]="settle"; bad["measurement"]["kind"]="actual"; bad["operationOutcome"]="succeeded"; add("settlement-without-reservation",validate_usage_entry,bad)
+    bad=copy.deepcopy(usage); bad["authority"]["authorityGrantRef"]=None; bad["kind"]="settle"; bad["relatedEntryRef"]="usage://example.test/entries/attempt-001/reserve"; bad["measurement"]["kind"]="actual"; bad["operationOutcome"]="succeeded"; add("executed-usage-without-authority",validate_usage_entry,bad)
+    bad=copy.deepcopy(usage); bad["kind"]="waive"; bad["measurement"]["kind"]="actual"; bad["operationOutcome"]="denied"; add("waiver-that-debits",validate_usage_entry,bad)
+    bad=copy.deepcopy(usage); bad["authority"]["access_token"]="redacted-canary"; add("usage-secret-channel",validate_usage_entry,bad)
     bad=copy.deepcopy(paypal); bad["operations"].append(copy.deepcopy(bad["operations"][0])); add("duplicate-payment-operation",validate_payment_profile,bad)
     bad=copy.deepcopy(paypal); bad["operations"]=[item for item in bad["operations"] if item["id"]!="verify_event"]; add("payment-without-event-verifier",validate_payment_profile,bad)
     bad=copy.deepcopy(paypal); bad["operations"][0]["idempotency"]={"required":False,"keySource":"none"}; add("non-idempotent-payment-command",validate_payment_profile,bad)
@@ -553,7 +652,7 @@ def run_all()->dict[str,Any]:
         try: case()
         except (ContractError,KeyError,TypeError): rejected.append(name)
         else: raise AssertionError(f"adversarial case accepted: {name}")
-    return {"schema":"wellmanifest.saas-lifecycle-conformance/v1","ok":True,"schemaDigest":"sha256:"+SCHEMA_DIGEST,"grammarDigest":"sha256:"+GRAMMAR_DIGEST,"profileSchemaDigest":"sha256:"+PROFILE_SCHEMA_DIGEST,"profileExamplesDigest":"sha256:"+PROFILE_EXAMPLES_DIGEST,"positiveVariants":4,"adapterProfileVariants":len(profiles),"adversarialRejected":rejected}
+    return {"schema":"wellmanifest.saas-lifecycle-conformance/v1","ok":True,"schemaDigest":"sha256:"+SCHEMA_DIGEST,"grammarDigest":"sha256:"+GRAMMAR_DIGEST,"profileSchemaDigest":"sha256:"+PROFILE_SCHEMA_DIGEST,"profileExamplesDigest":"sha256:"+PROFILE_EXAMPLES_DIGEST,"positiveVariants":5,"adapterProfileVariants":len(profiles),"adversarialRejected":rejected}
 
 
 def main()->int:
