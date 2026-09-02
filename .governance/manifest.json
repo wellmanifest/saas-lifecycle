@@ -66,9 +66,10 @@
           "package.json",
           "pyproject.toml",
           "go.mod",
-          "Cargo.toml",
-          "pom.xml",
-          "docs/**",
+        "Cargo.toml",
+        "pom.xml",
+        "dsl-manifest.json",
+        "docs/**",
           "standard/**"
         ]
       },
