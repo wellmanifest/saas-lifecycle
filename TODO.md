@@ -17,3 +17,7 @@
 - [x] [ticket-002](project/ticket-002/README.md) — standardize generic usage
   packages, capability-equivalent tiers, expiring PrePaid add-ons, localized
   display currencies and separate self-hosted perpetual licensing.
+
+## Automatic Planfile synchronization — 2026-09-15
+
+- [x] Add the reusable GitHub Actions caller workflow pinned to `v0.1.126` — ticket-008.
