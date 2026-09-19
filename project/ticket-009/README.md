@@ -2,7 +2,7 @@
 
 - **ID**: ticket-009
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
+- **Status**: DONE
 - **Created**: 2026-09-16
 
 ## Goal and scope

@@ -5,3 +5,13 @@ __pycache__/
 # todo2code advisory runs
 .intent/
 .intent-compare/
+.planfile/
+
+# Repository-local worktrees and operational state
+/.worktrees/
+/.subactor/leases/
+/.subactor/sessions/
+/.subactor/recovery/
+/.subactor/receipts/
+/.subactor/cache/
+/.subactor/snapshots/

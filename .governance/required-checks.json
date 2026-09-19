@@ -1,11 +1,10 @@
 {
   "schema": "new-project.required-checks/v1",
   "version": 1,
-  "repository": "wellmanifest/new-project",
-  "workflowFile": ".github/workflows/ci.yml",
+  "repository": "wellmanifest/saas-lifecycle",
+  "workflowFile": ".github/workflows/lifecycle-conformance.yml",
   "requiredCheckNames": [
-    "test",
-    "windows-governance"
+    "standards / lifecycle conformance"
   ],
   "circularGovernanceChecksIgnoredByValidator": [
     "governance / enforce",
