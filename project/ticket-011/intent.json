@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-011",
+  "summary": "Complete dsl-manifest decisionProtocol and reconcile closed tickets",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "dsl-manifest.json",
+    "project/ticket-011/**",
+    "project/ticket-006/README.md",
+    "project/ticket-007/README.md",
+    "project/ticket-008/README.md",
+    "project/ticket-010/README.md",
+    "project/TICKETS.md",
+    "TODO.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7f216cf5f3d53a19ff81839f1c2657e1c4814157",
+    "targetBranch": "main",
+    "outcome": "Add decisionProtocol: none to dsl-manifest.json and reconcile historical closed tickets.",
+    "nonGoals": [
+      "No schema breaking changes",
+      "No commercial protocol logic alteration"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Configure decisionProtocol: none in dsl-manifest.json to satisfy DSL-LLM-001.",
+      "components": [
+        {
+          "name": "dsl-manifest",
+          "paths": [
+            "dsl-manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "Set llm.decisionProtocol to none in dsl-manifest.json"
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"import json; m=json.load(open('dsl-manifest.json')); assert m['llm']['decisionProtocol'] == 'none'\""
+        ],
+        "evidence": "llm.decisionProtocol is set to none in dsl-manifest.json."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 standard/conformance.py --all"
+        ],
+        "evidence": "Domain conformance suite passes."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
