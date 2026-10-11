@@ -104,7 +104,6 @@
   },
   "llm": {
     "mode": "none",
-    "decisionProtocol": "none",
     "requestSchemas": [],
     "responseSchemas": [],
     "naturalLanguage": "forbidden",
