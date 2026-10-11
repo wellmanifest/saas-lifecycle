@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-012",
+  "summary": "Restore pinned SaaS DSL manifest conformance",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-012/**",
+    "dsl-manifest.json"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "39b48f0cc0ef9b142a8bcd83bda1949113246267",
+    "targetBranch": "main",
+    "outcome": "The published manifest passes its own immutable b7d0595 DSL validator by removing the unsupported dormant-LLM decisionProtocol field.",
+    "nonGoals": [
+      "live policy or runtime activation",
+      "domain schema/LLM authority change",
+      "different DSL standard adoption",
+      "foreign ticket closure or takeover"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the declared immutable schema, not the latest checker; restore exact allowed LLM fields while keeping mode none and modelAuthority none.",
+      "components": [
+        {
+          "name": "dsl-manifest",
+          "paths": [
+            "dsl-manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "Remove unsupported decisionProtocol from the dormant LLM metadata."
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the one manifest field removal; domain behavior and managed pins unchanged."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "Run independently extracted SHA256-verified b7d0595 DSL checker: validate dsl-manifest.json"
+        ],
+        "evidence": "Canonical subactor/docs harmonization report; private ignored validation digests."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 standard/conformance.py --all",
+          "./project/governance-check.sh --actor agent"
+        ],
+        "evidence": "No domain failures and no scoped governance findings."
+      }
+    ]
+  }
+}
