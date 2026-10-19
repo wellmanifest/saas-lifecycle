@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-013",
+  "summary": "Vendor compact Lifecycle DSL validator and compact saas-lifecycle profile",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-013/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "dsl-manifest.json",
+    "standard/conformance.py",
+    "standard/lifecycle.py",
+    "standard/saas-lifecycle.lifecycle"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1f3d9030e560a4b667c40468b8dddd6199246c91",
+    "targetBranch": "main",
+    "outcome": "Vendor compact Lifecycle DSL validator (wellmanifest/lifecycle 1ea2a90bd5b90a768ad2b36a9c1c330523bc80b4), compact standard/saas-lifecycle.lifecycle to 0 compaction findings, enforce zero compaction findings in conformance.py, and sync dsl-manifest.json.",
+    "nonGoals": [
+      "No breaking changes to the saas-lifecycle JSON Schema or state graph"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Update vendored standard/lifecycle.py to revision 1ea2a90bd5b90a768ad2b36a9c1c330523bc80b4, compact standard/saas-lifecycle.lifecycle with STATES/EVENTS/EVIDENCES/multi-source TRANSITION constructs, require finding_count == 0 in conformance.py, and sync dsl-manifest.json.",
+      "components": [
+        {
+          "name": "standard",
+          "paths": [
+            "standard/conformance.py",
+            "standard/lifecycle.py",
+            "standard/saas-lifecycle.lifecycle"
+          ]
+        },
+        {
+          "name": "dsl-manifest",
+          "paths": [
+            "dsl-manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert vendored validator, compacted profile, and updated digests in standard/ and dsl-manifest.json."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 standard/conformance.py --all",
+          "./project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Conformance and governance checks pass with 0 compaction findings."
+      }
+    ]
+  }
+}
