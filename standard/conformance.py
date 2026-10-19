@@ -26,9 +26,9 @@ SCHEMA_DIGEST = "f53aef1a48c3f8e20190a49e1b16438cafdb602b2744684d249d71798802a7b
 GRAMMAR_DIGEST = "2565b1c0e93c1f5ee84c299428ef8592e295b4a3337585409ae1ee19644d7690"
 PROFILE_SCHEMA_DIGEST = "060495e3dda6a80bc67d861d55422dff65df912028b0d3a7a598959de3df7054"
 PROFILE_EXAMPLES_DIGEST = "5ed1f16934de26008feafdcdd98577298db2474c8ddf8b5aa0128aadfb52fc49"
-LIFECYCLE_SOURCE_REVISION = "4b5e131a670afb46ca87291479fed7c0fefcf370"
-LIFECYCLE_VALIDATOR_DIGEST = "9c3f3076b5b45408d3eefc34cd567b58821aa565d3fe3bf6339641111079ede0"
-LIFECYCLE_PROFILE_DIGEST = "6b677b2307099b03f188a7391dbf0aa8ec884a6fc97c4a5d249e9c96e388dcd9"
+LIFECYCLE_SOURCE_REVISION = "1ea2a90bd5b90a768ad2b36a9c1c330523bc80b4"
+LIFECYCLE_VALIDATOR_DIGEST = "7f7f1c45b7611e186cc640ada69cf2849d16841564c4028b9fc06dd0a05c2b3a"
+LIFECYCLE_PROFILE_DIGEST = "e95791ea1d8d9e38c494ba38ca8abbdf2eba6816a122850d76359c6d356e9ed0"
 SCHEMA_URI = "https://wellmanifest.dev/schemas/saas-lifecycle/v1"
 PROFILE_SCHEMA_URI = "https://wellmanifest.dev/schemas/saas-adapter-profile/v1"
 SENSITIVE = re.compile(r"(?:password|passwd|token|secret|cookie|api[-_]?key|card|cvv|private[-_]?key|webhook[-_]?signature)", re.I)
@@ -83,6 +83,8 @@ def validate_lifecycle_profile(schema: dict[str, Any]) -> None:
     report = lifecycle.validate_path(LIFECYCLE_PATH, lifecycle.embedded_catalog())
     if not report.valid or len(report.lifecycles) != 1:
         raise ContractError("Lifecycle DSL profile is invalid")
+    if lifecycle.audit_path(LIFECYCLE_PATH)["finding_count"] != 0:
+        raise ContractError("Lifecycle DSL profile has compaction findings")
     model = report.lifecycles[0]
     state_values = schema["$defs"]["lifecycle"]["properties"]["state"]["enum"]
     expected_states = {lifecycle_name(str(value)) for value in state_values}
