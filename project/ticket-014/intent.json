@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-014",
+  "summary": "Modularize and harden SaaS lifecycle conformance",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-014/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "dsl-manifest.json",
+    "standard/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "82f1e8cdda1df78c9de2ef02b1cf14425eded439",
+    "targetBranch": "main",
+    "outcome": "Decompose standard/conformance.py (723L) into six focused modules strictly < 500 lines, eliminate bool-as-int acceptance and unhashable list crashes, enforce JSON Schema field/length/enum parity, reject duplicate JSON keys, symlinks, and inline bearer/private-key secrets, narrow adversarial catching strictly to ContractError, and sync dsl-manifest.json.",
+    "nonGoals": [
+      "Do not modify pinned vendored standard/lifecycle.py or normative JSON schemas"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 7,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Split standard/conformance.py into saas_contracts.py, saas_validators.py, saas_usage.py, saas_examples.py, saas_profiles.py, and conformance.py (< 500 lines each) while re-exporting all public entrypoints from conformance.py and updating artifact digests in dsl-manifest.json.",
+      "components": [
+        {
+          "name": "standard",
+          "paths": [
+            "standard/conformance.py",
+            "standard/saas_contracts.py",
+            "standard/saas_validators.py",
+            "standard/saas_usage.py",
+            "standard/saas_examples.py",
+            "standard/saas_profiles.py"
+          ]
+        },
+        {
+          "name": "dsl-manifest",
+          "paths": [
+            "dsl-manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert modularized standard/*.py conformance files and restore dsl-manifest.json."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 standard/conformance.py --all",
+          "./project/governance-check.sh --base origin/main",
+          "wellman check"
+        ],
+        "evidence": "All positive, ledger, and 70 adversarial conformance checks, governance gates, and wellman checks pass."
+      }
+    ]
+  }
+}

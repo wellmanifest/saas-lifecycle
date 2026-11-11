@@ -50,7 +50,32 @@
     {
       "path": "standard/conformance.py",
       "role": "parser-contract",
-      "digest": "sha256:f3a10beabc6a111635b47bea3609d783a2a7f22031cb1cc5e47b62a286e0a438"
+      "digest": "sha256:431355ec6c4269a8e030fbba5d993372a33d4669502be8a45a0a2bb01e6eb721"
+    },
+    {
+      "path": "standard/saas_contracts.py",
+      "role": "parser-contract",
+      "digest": "sha256:ab68e8b5d61f31a517879f5a2a62ab8384b3157819c687437ee130b041d3a882"
+    },
+    {
+      "path": "standard/saas_validators.py",
+      "role": "parser-contract",
+      "digest": "sha256:79b444fafebd9bbd2f224ec6a5d3e3c2e3e51e3223d291666fb53ca2a6ca8e67"
+    },
+    {
+      "path": "standard/saas_usage.py",
+      "role": "parser-contract",
+      "digest": "sha256:d07aae26cc5fae5d6636142d39b4c48ea4341af0a155c55d83500d43f3f1e8dd"
+    },
+    {
+      "path": "standard/saas_examples.py",
+      "role": "parser-contract",
+      "digest": "sha256:49b4f751b8fd85247661dd2043657e3cf2a7c0471f0d19a19e64e32dbe066fbf"
+    },
+    {
+      "path": "standard/saas_profiles.py",
+      "role": "parser-contract",
+      "digest": "sha256:37c6e29cb09bf2840e6d1ebb6557f4e981ae8bdfb1d33ed3bf9e9d4fe9f211da"
     },
     {
       "path": "docs/ARCHITECTURE.md",
